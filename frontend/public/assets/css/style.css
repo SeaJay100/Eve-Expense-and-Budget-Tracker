@@ -353,3 +353,256 @@ header {
     padding: 0 0 14px;
   }
 }
+
+/* Transaction pages */
+.container,
+.addtransaction-container {
+  width: min(100%, 900px);
+  margin: 0 auto;
+}
+
+.page-title,
+.addtransaction-title {
+  margin-bottom: 24px;
+}
+
+.page-title h2,
+.addtransaction-title h2 {
+  margin: 0;
+  color: #173d68;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(25px, 3vw, 32px);
+  letter-spacing: -0.8px;
+}
+
+.addtransaction-title p {
+  margin: 8px 0 0;
+  color: #7185a3;
+}
+
+.panel,
+.addtransaction-panel {
+  padding: 24px;
+  border: 1px solid rgba(23, 61, 104, 0.12);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.addtransaction-panel form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.transaction-type,
+.form-actions {
+  grid-column: 1 / -1;
+}
+
+.transaction-type {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid #d5e0ea;
+  border-radius: 10px;
+}
+
+.transaction-type legend {
+  padding: 0 6px;
+  color: #41566f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.transaction-type label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #41566f;
+  cursor: pointer;
+}
+
+.transaction-type input {
+  accent-color: var(--teal-dark);
+}
+
+.form-group {
+  min-width: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 7px;
+  color: #41566f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #cbd7e4;
+  border-radius: 9px;
+  color: #173d68;
+  background: #fff;
+  font: inherit;
+}
+
+.form-group input::placeholder {
+  color: #9fb2cc;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--teal-dark);
+  outline: 3px solid rgba(61, 127, 201, 0.16);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.btn {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--teal-dark);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background: #326eaf;
+}
+
+.btn-outline {
+  border-color: #cbd7e4;
+  color: #41566f;
+  background: #fff;
+}
+
+.btn-outline:hover,
+.btn-outline:focus-visible {
+  border-color: var(--teal-dark);
+  color: #173d68;
+  background: #f4f8fc;
+}
+
+.filter-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: end;
+}
+
+.filter-form > .btn {
+  justify-self: start;
+}
+
+.table-panel {
+  margin-top: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 61, 104, 0.12);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background: #f4f7f9;
+}
+
+.table th,
+.table td {
+  padding: 15px 18px;
+  border-bottom: 1px solid #e5ebf1;
+  text-align: left;
+}
+
+.table th {
+  color: #173d68;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table td {
+  color: #5c7088;
+  font-size: 14px;
+}
+
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table .amount {
+  text-align: right;
+}
+
+.table .actions {
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .panel,
+  .addtransaction-panel {
+    padding: 18px;
+  }
+
+  .addtransaction-panel form,
+  .filter-form {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .transaction-type,
+  .form-actions {
+    grid-column: auto;
+  }
+
+  .form-actions .btn {
+    flex: 1 1 100%;
+  }
+
+  .table-panel {
+    margin-top: 18px;
+  }
+}

@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 const express = require('express')
+const path = require('path')
 const cors = require('cors')
 const mongoose = require('mongoose')
 const { hash } = require('bcrypt')
@@ -8,10 +9,11 @@ const { hash } = require('bcrypt')
 const app = express()
 
 const PORT = process.env.PORT || 3000
-const MONGOURI = process.env.MONGO_URI
+const MONGOURI = process.env.MONGO_URI || process.env.MONGODB_URI
 
 //middleware for json parsing
 app.use(express.json())
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')))
 
 mongoose.connect(MONGOURI).then(() => {
     console.log(`Database is connected...`)
