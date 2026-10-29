@@ -1,6 +1,7 @@
 import express from "express"
 import dotenv from "dotenv"
 import { connectDB } from "./config/db.js"
+import authRoute from './routes/auth.js'
 
 dotenv.config()
 const app = express()
@@ -10,9 +11,8 @@ const PORT = process.env.PORT || 3000
 //middleware for json parsing
 app.use(express.json())
 
-app.get('/', (req, res) => {
-    res.send("Welcome to backend...")
-})
+app.use("/api/users", authRoute)
+
 
 connectDB()
 
