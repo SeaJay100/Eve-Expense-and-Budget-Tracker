@@ -1,37 +1,22 @@
-require('dotenv').config()
+import express from "express"
+import dotenv from "dotenv"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import { connectDB } from "./config/db.js"
 
-const express = require('express')
-const path = require('path')
-const cors = require('cors')
-const mongoose = require('mongoose')
-const { hash } = require('bcrypt')
+dotenv.config()
 
 const app = express()
-
 const PORT = process.env.PORT || 3000
-const MONGOURI = process.env.MONGO_URI || process.env.MONGODB_URI
+const currentDir = path.dirname(fileURLToPath(import.meta.url))
+const frontendPublicDir = path.join(currentDir, "..", "frontend", "public")
 
-//middleware for json parsing
 app.use(express.json())
-app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')))
+app.use(express.static(frontendPublicDir))
 
-mongoose.connect(MONGOURI).then(() => {
-    console.log(`Database is connected...`)
+connectDB().then(() => {
     app.listen(PORT, () => {
-        console.log(`Port is running on ${PORT}`)
-        console.log(`http://localhost:${PORT}`)
+        console.log(`The port is running on ${PORT}`)
+        console.log(`http://localhost:${PORT}/`)
     })
-}).catch((error) => console.log(error))
-
-const userSchema = new mongoose.Schema ({
-    userName: String,
-    password: String
-})
-
-const userModel = mongoose.model('users', userSchema)
-
-
-app.get('/Users', async(req, res) => {
-    const userData = await userModel.find()
-    res.json(userData)
 })
