@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Log in to Eve to manage your expenses and budget.">
+    <title>Eve | Log in</title>
+    <link rel="stylesheet" href="../assets/css/auth.css">
+    <script src="../assets/js/auth-config.js" defer></script>
+    <script src="../assets/js/auth.js" defer></script>
+</head>
+<body class="auth-page login-page">
+    <main class="auth-layout">
+        <aside class="auth-story" aria-label="About Eve">
+            <a class="brand" href="login.html" aria-label="Eve login">Eve<span>.</span></a>
+            <div class="story-content">
+                <p class="eyebrow">EXPENSE &amp; BUDGET TRACKER</p>
+                <h1>Your money, <br>with a little <br>more clarity.</h1>
+                <p class="story-description">Stay on top of your spending and build better habits, one day at a time.</p>
+                <div class="budget-illustration" aria-hidden="true">
+                    <div class="illustration-heading"><span>A little perspective</span><span class="illustration-tag">Every day</span></div>
+                    <div class="illustration-bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="illustration-footer"><span>Make every small step count</span><span>&#8599;</span></div>
+                </div>
+            </div>
+            <p class="story-footer">Your money. Your pace. Your Eve.</p>
+        </aside>
+        <section class="auth-main" aria-labelledby="form-title">
+            <div class="auth-card">
+                <p class="eyebrow form-eyebrow">GOOD TO SEE YOU AGAIN</p>
+                <h2 id="form-title">Welcome back</h2>
+                <p class="form-description">Log in to pick up where you left off.</p>
+                <div id="form-message" class="form-message" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+                <form id="login-form" class="auth-form">
+                    <div class="field">
+                        <label for="email">Email address</label>
+                        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="username" required>
+                    </div>
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <div class="password-field">
+                            <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+                            <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Show password" aria-pressed="false">Show</button>
+                        </div>
+                    </div>
+                    <button class="auth-submit" type="submit"><span>Log in</span><span aria-hidden="true">&#8594;</span></button>
+                </form>
+                <p class="auth-switch">New to Eve? <a href="register.html">Create an account</a></p>
+            </div>
+            <p class="auth-footer">A little more intention. A lot more peace of mind.</p>
+        </section>
+    </main>
+</body>
+</html>

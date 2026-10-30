@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-session-pending>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eve | Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="assets/js/auth-config.js" defer></script>
+    <script src="assets/js/session.js" defer></script>
 </head>
 <body>
     <header>
@@ -16,16 +18,23 @@
         <nav class="nav">
             <ul>
                 <li><a href="index.html">Home</a></li>
-                <li><a href="transactions.html">Transactions</a></li>
+                <li><a href="pages/transactions.html">Transactions</a></li>
                 <li><a href="#">Accounts</a></li>
                 <li><a href="#">Categories</a></li>
             </ul>
         </nav>
 
         <div class="addtransaction-btn">
-            <button type="button" class="add-transaction" onclick="window.location.href='addtransaction.html'">Add Transaction</button>
+            <button type="button" class="add-transaction" onclick="window.location.href='pages/add-transaction.html'">Add Transaction</button>
+            <button type="button" class="logout-button" id="logout-button">Log out</button>
         </div>
     </header>
+
+    <p class="session-status" id="session-status" role="status" aria-live="polite">Checking your session...</p>
+    <section class="dashboard-intro" aria-labelledby="dashboard-heading">
+        <h2 id="dashboard-heading">Welcome back<span id="dashboard-username"></span></h2>
+        <p>Here's your money at a glance.</p>
+    </section>
 
     <section class="summary-cards">
       <div class="summary-card">

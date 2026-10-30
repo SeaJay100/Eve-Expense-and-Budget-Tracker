@@ -55,13 +55,11 @@ router.post('/login', async (req, res) => {
     }
 })
 
-
 //Me
 router.get('/me', protect, async (req, res) => {
     res.status(200).json(req.user)
 
 })
-
 
 //Generate JWT token
 const generateToken = (id) => {
