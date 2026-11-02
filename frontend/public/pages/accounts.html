@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eve | Accounts</title>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="../index.html"><h1>Eve</h1></a>
+        </div>
+        
+
+        <nav class="nav">
+            <ul>
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="transactions.html">Transactions</a></li>
+                <li><a href="#">Accounts</a></li>
+                <li><a href="#">Categories</a></li>
+            </ul>
+        </nav>
+
+        <div class="addtransaction-btn">
+            <button type="button" class="add-transaction" onclick="window.location.href='add-transaction.html'">Add Transaction</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-title">
+            <h2>Accounts</h2>
+        </section>
+
+    <!-- Account cards -->
+    <section class="account-cards" id="account-cards">
+
+    <!-- plug ins for now -->
+    <article class="account-card">
+        <h3>Cash</h3>
+        <p class="account-type">Cash</p>
+        <p class="account-balance">₱0</p>
+        <p class="account-note">Started at ₱0 · 0 transactions</p>
+    </article>
+
+    <article class="account-card">
+        <h3>GCash</h3>
+        <p class="account-type">E-wallet</p>
+        <p class="account-balance">₱0</p>
+        <p class="account-note">Started at ₱0 · 0 transactions</p>
+    </article>
+
+    <article class="account-card">
+        <h3>BDO Savings</h3>
+        <p class="account-type">Bank</p>
+        <p class="account-balance">₱0</p>
+        <p class="account-note">Started at ₱0 · 0 transactions</p>
+    </article>
+
+    </section>
+
+    <!-- Add an account -->
+    <section class="panel form-panel">
+      <h3>Add an account</h3>
+
+      <form id="account-form">
+
+        <div class="form-group">
+          <label for="account-name">Name</label>
+          <input type="text" id="account-name" name="name" placeholder="e.g. Maya Wallet">
+        </div>
+
+        <div class="form-group">
+          <label for="account-type">Type</label>
+          <select id="account-type" name="type">
+            <option value="Cash">Cash</option>
+            <option value="E-wallet">E-wallet</option>
+            <option value="Bank">Bank</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="starting-balance">Starting balance (₱)</label>
+          <input type="number" id="starting-balance" name="startingBalance" step="1" placeholder="0.00">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Save account</button>
+
+      </form>
+    </section>
+    </main>
+
+
+</body>
+</html>
