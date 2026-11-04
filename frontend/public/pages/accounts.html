@@ -4,91 +4,176 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eve | Accounts</title>
+ 
+    <!-- Styles for the new card feature. If you already have a CSS file,
+         move these rules into it. -->
+    <style>
+        /* Grid layout: new cards fall into the next open slot automatically */
+        .account-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+ 
+        /* Hide the empty grid so only the form shows at first */
+        .account-cards:empty {
+            display: none;
+        }
+ 
+        /* Pop-in animation, plays once when a card is added */
+        .account-card {
+            animation: pop-in 0.35s ease-out;
+        }
+ 
+        @keyframes pop-in {
+            from { opacity: 0; transform: scale(0.85) translateY(10px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+ 
+        .form-error {
+            color: #b3261e;
+            font-size: 13px;
+            min-height: 1em;
+        }
+ 
+        @media (prefers-reduced-motion: reduce) {
+            .account-card { animation: none; }
+        }
+    </style>
 </head>
 <body>
     <header>
         <div class="logo">
             <a href="../index.html"><h1>Eve</h1></a>
         </div>
-        
-
+ 
         <nav class="nav">
             <ul>
                 <li><a href="../index.html">Home</a></li>
                 <li><a href="transactions.html">Transactions</a></li>
-                <li><a href="#">Accounts</a></li>
+                <li><a href="accounts.html">Accounts</a></li>
                 <li><a href="#">Categories</a></li>
             </ul>
         </nav>
-
+ 
         <div class="addtransaction-btn">
             <button type="button" class="add-transaction" onclick="window.location.href='add-transaction.html'">Add Transaction</button>
         </div>
     </header>
-
+ 
     <main class="container">
         <section class="page-title">
             <h2>Accounts</h2>
         </section>
-
-    <!-- Account cards -->
-    <section class="account-cards" id="account-cards">
-
-    <!-- plug ins for now -->
-    <article class="account-card">
-        <h3>Cash</h3>
-        <p class="account-type">Cash</p>
-        <p class="account-balance">₱0</p>
-        <p class="account-note">Started at ₱0 · 0 transactions</p>
-    </article>
-
-    <article class="account-card">
-        <h3>GCash</h3>
-        <p class="account-type">E-wallet</p>
-        <p class="account-balance">₱0</p>
-        <p class="account-note">Started at ₱0 · 0 transactions</p>
-    </article>
-
-    <article class="account-card">
-        <h3>BDO Savings</h3>
-        <p class="account-type">Bank</p>
-        <p class="account-balance">₱0</p>
-        <p class="account-note">Started at ₱0 · 0 transactions</p>
-    </article>
-
-    </section>
-
-    <!-- Add an account -->
-    <section class="panel form-panel">
-      <h3>Add an account</h3>
-
-      <form id="account-form">
-
-        <div class="form-group">
-          <label for="account-name">Name</label>
-          <input type="text" id="account-name" name="name" placeholder="e.g. Maya Wallet">
-        </div>
-
-        <div class="form-group">
-          <label for="account-type">Type</label>
-          <select id="account-type" name="type">
-            <option value="Cash">Cash</option>
-            <option value="E-wallet">E-wallet</option>
-            <option value="Bank">Bank</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="starting-balance">Starting balance (₱)</label>
-          <input type="number" id="starting-balance" name="startingBalance" step="1" placeholder="0.00">
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-block">Save account</button>
-
-      </form>
-    </section>
+ 
+        <!-- Account cards: empty at first, filled when the user saves an account -->
+        <section class="account-cards" id="account-cards" aria-live="polite"></section>
+ 
+        <!-- Add an account -->
+        <section class="panel form-panel">
+            <h3>Add an account</h3>
+ 
+            <form id="account-form">
+ 
+                <div class="form-group">
+                    <label for="account-name">Name</label>
+                    <input type="text" id="account-name" name="name" placeholder="e.g. Maya Wallet">
+                </div>
+ 
+                <div class="form-group">
+                    <label for="account-type">Type</label>
+                    <select id="account-type" name="type">
+                        <option value="Cash">Cash</option>
+                        <option value="E-wallet">E-wallet</option>
+                        <option value="Bank">Bank</option>
+                    </select>
+                </div>
+ 
+                <div class="form-group">
+                    <label for="starting-balance">Starting balance (₱)</label>
+                    <input type="text" inputmode="decimal" id="starting-balance" name="startingBalance" placeholder="0.00">
+                </div>
+ 
+                <p class="form-error" id="form-error" role="alert"></p>
+ 
+                <button type="submit" class="btn btn-primary btn-block">Save account</button>
+ 
+            </form>
+        </section>
     </main>
-
-
+ 
+    <script>
+        // Wait until the page is loaded so every element exists
+        document.addEventListener("DOMContentLoaded", function () {
+            const accountForm = document.getElementById("account-form");
+            const accountCards = document.getElementById("account-cards");
+            const formError = document.getElementById("form-error");
+ 
+            // These messages show up in the browser console (F12) if something is missing
+            if (!accountForm) console.error("Missing element: #account-form");
+            if (!accountCards) console.error("Missing element: #account-cards");
+            if (!accountForm || !accountCards) return;
+ 
+            function showError(message) {
+                if (formError) formError.textContent = message;
+                else if (message) alert(message);
+            }
+ 
+            function formatPeso(amount) {
+                return "₱" + amount.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+ 
+            function createAccountCard(name, type, balance) {
+                const card = document.createElement("article");
+                card.className = "account-card";
+ 
+                const title = document.createElement("h3");
+                title.textContent = name;
+ 
+                const typeEl = document.createElement("p");
+                typeEl.className = "account-type";
+                typeEl.textContent = type;
+ 
+                const balanceEl = document.createElement("p");
+                balanceEl.className = "account-balance";
+                balanceEl.textContent = formatPeso(balance);
+ 
+                const noteEl = document.createElement("p");
+                noteEl.className = "account-note";
+                noteEl.textContent = "Started at " + formatPeso(balance) + " · 0 transactions";
+ 
+                card.append(title, typeEl, balanceEl, noteEl);
+                return card;
+            }
+ 
+            accountForm.addEventListener("submit", function (e) {
+                e.preventDefault();
+ 
+                const name = document.getElementById("account-name").value.trim();
+                const type = document.getElementById("account-type").value;
+                // Remove commas so "1,000.00" works
+                const rawBalance = document.getElementById("starting-balance").value.replace(/,/g, "").trim();
+                const balance = parseFloat(rawBalance);
+ 
+                if (!name) {
+                    showError("Enter a name for the account.");
+                    return;
+                }
+                if (isNaN(balance) || balance < 0) {
+                    showError("Enter a starting balance of 0 or more.");
+                    return;
+                }
+ 
+                showError("");
+                accountCards.appendChild(createAccountCard(name, type, balance));
+                accountForm.reset();
+                document.getElementById("account-name").focus();
+            });
+        });
+    </script>
 </body>
 </html>
