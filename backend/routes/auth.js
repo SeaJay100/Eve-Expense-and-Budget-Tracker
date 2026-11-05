@@ -7,8 +7,9 @@ const router = express.Router()
 
 //Register
 router.post('/register', async (req, res) => {
-    const {username, email, password} = req.body
     try{
+        const {username, email, password} = req.body || {}
+
         if (!username || !email || !password){
             return res.status(400).json({message: "Please fill all the fields."})
         }
@@ -16,6 +17,11 @@ router.post('/register', async (req, res) => {
         const userExist = await User.findOne({email})
         if (userExist) {
             return res.status(400).json({message: "User already exist."})
+        }
+
+        const usernameExist = await User.findOne({username})
+        if (usernameExist) {
+            return res.status(400).json({message: "Username already exists."})
         }
 
         const user = await User.create({username, email, password})
@@ -27,14 +33,19 @@ router.post('/register', async (req, res) => {
             token,
         })
     } catch (err) {
+        // The database also checks duplicates if two people register at the same time.
+        if (err.code === 11000) {
+            return res.status(400).json({message: "Username or email already exists."})
+        }
         res.status(500).json({message: err.message})
     }
 })
 
 //Login
 router.post('/login', async (req, res) => {
-    const {email, password} = req.body
     try {
+        const {email, password} = req.body || {}
+
         if (!email || !password){
             return res.status(400).json({message: "Please fill all the fields."})
         }

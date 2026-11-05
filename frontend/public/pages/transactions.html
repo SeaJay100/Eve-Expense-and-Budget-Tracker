@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-session-pending>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eve | Transactions</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/auth-config.js" defer></script>
+    <script src="../assets/js/api.js" defer></script>
+    <script src="../assets/js/session.js" defer></script>
+    <script src="../assets/js/data.js" defer></script>
 </head>
 <body>
     <header>
@@ -17,8 +21,8 @@
             <ul>
                 <li><a href="../index.html">Home</a></li>
                 <li><a href="transactions.html">Transactions</a></li>
-                <li><a href="#">Accounts</a></li>
-                <li><a href="#">Categories</a></li>
+                <li><a href="accounts.html">Accounts</a></li>
+                <li><a href="categories.html">Categories</a></li>
             </ul>
         </nav>
 
@@ -83,8 +87,6 @@
                             <th>Category</th>
                             <th>Account</th>
                             <th>Amount</th>
-                            <th class="amount">Amount</th>
-                            <th class="amount">Balance</th>
                             <th class="actions">Actions</th>
                         </tr>
                     </thead>

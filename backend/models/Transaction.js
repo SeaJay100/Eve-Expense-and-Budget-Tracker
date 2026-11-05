@@ -1,9 +1,22 @@
 import mongoose from "mongoose"
 
 const transactionSchema = new mongoose.Schema({
+    // The User ID of the person who owns this transaction.
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true
+    },
+    type: {
+        type: String,
+        enum: ['expense', 'income'],
+        default: 'expense'
+    },
     amount: {
         type: Number,
-        required: true
+        required: true,
+        validate: { validator: value => Number.isFinite(value) && value > 0, message: 'Transaction amount must be greater than zero.' }
     },
     description: {
         type: String
@@ -13,11 +26,13 @@ const transactionSchema = new mongoose.Schema({
         required: true
     },
     account: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Account',
         required: true
     },
     category: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
         required: true
     }
 })

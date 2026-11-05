@@ -1,32 +1,43 @@
 import express from 'express'
 import Categories from "../models/Categories.js"
+import { protect } from '../middleware/auth.js'
 
 const router = express.Router()
 
-router.get('/categories', async (req, res) => {
+router.get('/categories', protect, async (req, res) => {
     try {
-        const categories = await Account.find()
+        // Show only categories owned by the logged-in user.
+        const categories = await Categories.find({ user: req.user._id })
         return res.status(200).json(categories)
     } catch (err) {
         return res.status(500).json({ message: err.message })
     }
 })
 
-router.post('/categories', async (req, res) => {
+// protect makes the logged-in user available as req.user.
+router.post('/categories', protect, async (req, res) => {
     try{
-        const {categName, categType, categBudget} = req.body ?? {}
+        const {categName, categType, categBudget} = req.body || {}
 
-        if (!categName || !categType || !categBudget) {
+        if (!categName || !categType || categBudget === undefined || categBudget === null || categBudget === '') {
             return res.status(400).json({message: "Please fill all the fields."})
         }
-        if (Number(amount) === 0) {
+        if (Number(categBudget) === 0) {
             return res.status(400).json({message: "Category budget cannot be zero."})
         }
-        const categories = await Categories.create({categName, categType, categBudget})
+        // Save the owner's ID with the category.
+        const categories = await Categories.create({
+            user: req.user._id,
+            categName,
+            categType,
+            categBudget
+        })
         return res.status(201).json(categories)
     } catch (err){
-        const status = err.name === 'ValidationError' || err.name === 'CastError' ? 400 : 500
-        return res.status(status).json({message: err.message})
+        if (err.name === 'ValidationError' || err.name === 'CastError') {
+            return res.status(400).json({message: err.message})
+        }
+        return res.status(500).json({message: err.message})
     }
 })
 

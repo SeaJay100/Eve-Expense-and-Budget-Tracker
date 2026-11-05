@@ -30,6 +30,69 @@
   display: none;
 }
 
+[data-session-pending] main {
+  display: none;
+}
+
+.container,
+.addtransaction-container,
+.editTransaction-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  color: #173d68;
+}
+
+.panel,
+.addtransaction-panel,
+.editTransaction-panel,
+.account-card {
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #b2c4d9;
+  border-radius: 16px;
+  background: #fff;
+  color: #173d68;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+input,
+select {
+  padding: 10px;
+  border: 1px solid #b2c4d9;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 16px;
+  border: 1px solid #b2c4d9;
+  border-radius: 8px;
+  background: #fff;
+  color: #173d68;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-primary { background: #173d68; color: #fff; }
+.btn-danger { color: #b3261e; }
+button:disabled { opacity: .6; cursor: wait; }
+.data-message[data-type="error"] { color: #b3261e; }
+.data-message[data-type="success"] { color: #22623a; }
+.account-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.account-balance { font-size: 24px; font-weight: 700; }
+.table-container { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; background: #fff; }
+.table th, .table td { padding: 14px; border-bottom: 1px solid #b2c4d9; text-align: left; }
+.table td:last-child { white-space: nowrap; }
+
 .dashboard-intro,
 .session-status {
   max-width: 1280px;

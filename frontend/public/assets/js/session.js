@@ -1,70 +1,55 @@
 (() => {
-    const status = document.getElementById("session-status");
-
-    function logOut(expired = false) {
-        try {
-            sessionStorage.removeItem("eve.token");
-        } finally {
-            window.location.replace(expired ? "pages/login.html?expired=1" : "pages/login.html");
-        }
+    window.EVE_SESSION = { user: null };
+    let status = document.getElementById('session-status');
+    if (!status) {
+        status = document.createElement('p');
+        status.id = 'session-status';
+        status.className = 'session-status';
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        document.querySelector('header').after(status);
     }
-
-    document.getElementById("logout-button").addEventListener("click", () => logOut());
+    let logout = document.getElementById('logout-button');
+    if (!logout) {
+        logout = document.createElement('button');
+        logout.id = 'logout-button';
+        logout.type = 'button';
+        logout.className = 'logout-button';
+        logout.textContent = 'Log out';
+        document.querySelector('.addtransaction-btn').append(logout);
+    }
+    logout.addEventListener('click', () => window.EVE_API.logOut());
 
     async function verifySession() {
-        document.documentElement.setAttribute("data-session-pending", "");
+        document.documentElement.setAttribute('data-session-pending', '');
         status.hidden = false;
-        status.textContent = "Checking your session...";
-
-        let token;
+        status.textContent = 'Checking your session...';
         try {
-            token = sessionStorage.getItem("eve.token");
-        } catch {
-            window.location.replace("pages/login.html");
-            return;
-        }
-        if (!token) {
-            window.location.replace("pages/login.html");
-            return;
-        }
-
-        const controller = new AbortController();
-        const timeout = window.setTimeout(() => controller.abort(), 15000);
-        try {
-            const response = await fetch(`${window.EVE_CONFIG.apiBaseUrl}/me`, {
-                headers: { Authorization: `Bearer ${token}` },
-                cache: "no-store",
-                signal: controller.signal,
-            });
-            if (response.status === 401 || response.status === 403) {
-                logOut(true);
-                return;
-            }
-            if (!response.ok) throw new Error("Session verification failed.");
-            const user = await response.json();
-            if (!user || typeof user.username !== "string") {
-                throw new Error("Invalid session response.");
-            }
-            document.getElementById("dashboard-username").textContent = `, ${user.username}`;
-            document.documentElement.removeAttribute("data-session-pending");
+            const user = await window.EVE_API.request('/users/me');
+            if (!user || typeof user.username !== 'string') throw new Error('Invalid session response.');
+            window.EVE_SESSION.user = user;
+            const greeting = document.getElementById('dashboard-username');
+            if (greeting) greeting.textContent = `, ${user.username}`;
+            document.documentElement.removeAttribute('data-session-pending');
             status.hidden = true;
-        } catch {
-            // Keep the token on connection errors so users can retry without logging in again.
-            status.textContent = "We couldn't verify your session. Check that the server is running and try again. ";
-            const retry = document.createElement("button");
-            retry.type = "button";
-            retry.className = "session-retry";
-            retry.textContent = "Try again";
-            retry.addEventListener("click", verifySession);
+            window.dispatchEvent(new Event('eve:session-ready'));
+        } catch (error) {
+            window.EVE_SESSION.user = null;
+            status.textContent = `${error.message} `;
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'session-retry';
+            retry.textContent = 'Try again';
+            retry.addEventListener('click', verifySession);
             status.append(retry);
-        } finally {
-            window.clearTimeout(timeout);
         }
     }
 
-    // Recheck when a dashboard is restored by the browser's Back button.
-    window.addEventListener("pageshow", (event) => {
+    window.addEventListener('pageshow', event => {
         if (event.persisted) verifySession();
+    });
+    window.addEventListener('pagehide', () => {
+        document.documentElement.setAttribute('data-session-pending', '');
     });
     verifySession();
 })();

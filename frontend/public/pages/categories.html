@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-session-pending>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eve | Categories</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/auth-config.js" defer></script>
+    <script src="../assets/js/api.js" defer></script>
+    <script src="../assets/js/session.js" defer></script>
+    <script src="../assets/js/data.js" defer></script>
+</head>
+<body>
+    <header>
+        <div class="logo"><a href="../index.html"><h1>Eve</h1></a></div>
+        <nav class="nav">
+            <ul>
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="transactions.html">Transactions</a></li>
+                <li><a href="accounts.html">Accounts</a></li>
+                <li><a href="categories.html">Categories</a></li>
+            </ul>
+        </nav>
+        <div class="addtransaction-btn">
+            <button type="button" class="add-transaction" onclick="window.location.href='add-transaction.html'">Add Transaction</button>
+        </div>
+    </header>
+    <main class="container">
+        <section class="page-title"><h2>Categories</h2></section>
+        <section class="account-cards" id="category-cards" aria-live="polite"></section>
+        <section class="panel form-panel">
+            <h3>Add a category</h3>
+            <form id="category-form">
+                <div class="form-group">
+                    <label for="category-name">Name</label>
+                    <input id="category-name" name="categName" placeholder="e.g. Food" required>
+                </div>
+                <div class="form-group">
+                    <label for="category-type">Type</label>
+                    <select id="category-type" name="categType" required>
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category-budget">Budget (&#8369;)</label>
+                    <input type="number" step="0.01" id="category-budget" name="categBudget" placeholder="0.00" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Save category</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

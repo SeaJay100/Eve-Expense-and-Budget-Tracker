@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-session-pending>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,6 +41,11 @@
             .account-card { animation: none; }
         }
     </style>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/auth-config.js" defer></script>
+    <script src="../assets/js/api.js" defer></script>
+    <script src="../assets/js/session.js" defer></script>
+    <script src="../assets/js/data.js" defer></script>
 </head>
 <body>
     <header>
@@ -53,7 +58,7 @@
                 <li><a href="../index.html">Home</a></li>
                 <li><a href="transactions.html">Transactions</a></li>
                 <li><a href="accounts.html">Accounts</a></li>
-                <li><a href="#">Categories</a></li>
+                <li><a href="categories.html">Categories</a></li>
             </ul>
         </nav>
  
@@ -78,7 +83,7 @@
  
                 <div class="form-group">
                     <label for="account-name">Name</label>
-                    <input type="text" id="account-name" name="name" placeholder="e.g. Maya Wallet">
+                    <input type="text" id="account-name" name="name" required placeholder="e.g. Maya Wallet">
                 </div>
  
                 <div class="form-group">
@@ -92,7 +97,7 @@
  
                 <div class="form-group">
                     <label for="starting-balance">Starting balance (₱)</label>
-                    <input type="text" inputmode="decimal" id="starting-balance" name="startingBalance" placeholder="0.00">
+                    <input type="text" inputmode="decimal" id="starting-balance" name="startingBalance" required placeholder="0.00">
                 </div>
  
                 <p class="form-error" id="form-error" role="alert"></p>
@@ -103,77 +108,5 @@
         </section>
     </main>
  
-    <script>
-        // Wait until the page is loaded so every element exists
-        document.addEventListener("DOMContentLoaded", function () {
-            const accountForm = document.getElementById("account-form");
-            const accountCards = document.getElementById("account-cards");
-            const formError = document.getElementById("form-error");
- 
-            // These messages show up in the browser console (F12) if something is missing
-            if (!accountForm) console.error("Missing element: #account-form");
-            if (!accountCards) console.error("Missing element: #account-cards");
-            if (!accountForm || !accountCards) return;
- 
-            function showError(message) {
-                if (formError) formError.textContent = message;
-                else if (message) alert(message);
-            }
- 
-            function formatPeso(amount) {
-                return "₱" + amount.toLocaleString("en-PH", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            }
- 
-            function createAccountCard(name, type, balance) {
-                const card = document.createElement("article");
-                card.className = "account-card";
- 
-                const title = document.createElement("h3");
-                title.textContent = name;
- 
-                const typeEl = document.createElement("p");
-                typeEl.className = "account-type";
-                typeEl.textContent = type;
- 
-                const balanceEl = document.createElement("p");
-                balanceEl.className = "account-balance";
-                balanceEl.textContent = formatPeso(balance);
- 
-                const noteEl = document.createElement("p");
-                noteEl.className = "account-note";
-                noteEl.textContent = "Started at " + formatPeso(balance) + " · 0 transactions";
- 
-                card.append(title, typeEl, balanceEl, noteEl);
-                return card;
-            }
- 
-            accountForm.addEventListener("submit", function (e) {
-                e.preventDefault();
- 
-                const name = document.getElementById("account-name").value.trim();
-                const type = document.getElementById("account-type").value;
-                // Remove commas so "1,000.00" works
-                const rawBalance = document.getElementById("starting-balance").value.replace(/,/g, "").trim();
-                const balance = parseFloat(rawBalance);
- 
-                if (!name) {
-                    showError("Enter a name for the account.");
-                    return;
-                }
-                if (isNaN(balance) || balance < 0) {
-                    showError("Enter a starting balance of 0 or more.");
-                    return;
-                }
- 
-                showError("");
-                accountCards.appendChild(createAccountCard(name, type, balance));
-                accountForm.reset();
-                document.getElementById("account-name").focus();
-            });
-        });
-    </script>
 </body>
 </html>
