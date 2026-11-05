@@ -3,7 +3,7 @@ import Transaction from '../models/Transaction.js'
 
 const router = express.Router()
 
-router.post('/transaction/add', async (req, res) => {
+router.post('/transaction', async (req, res) => {
     const {amount, date, account, category} = req.body
 
     try{
