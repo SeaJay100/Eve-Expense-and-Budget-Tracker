@@ -1,124 +1,41 @@
-<!DOCTYPE html>
-<html lang="en" data-session-pending>
+<!doctype html>
+<html lang="en" data-app-loading>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eve | Edit transaction</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Eve · Your money, in view</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/views.css">
     <script src="../assets/js/auth-config.js" defer></script>
     <script src="../assets/js/api.js" defer></script>
-    <script src="../assets/js/session.js" defer></script>
     <script src="../assets/js/data.js" defer></script>
+    <script src="../assets/js/views.js" defer></script>
+    <script src="../assets/js/account-flow.js" defer></script>
+    <script src="../assets/js/session.js" defer></script>
 </head>
-<body>
-    <header>
-        <div class="logo">
-            <a href="../index.html"><h1>Eve</h1></a>
+<body data-page="transactions" data-entry="edit">
+    <a class="skip" href="#main">Skip to content</a>
+    <main id="startup" class="startup">
+        <div class="startup-content">
+            <div class="startup-brand">
+                <svg viewBox="0 0 32 40" aria-hidden="true">
+                    <path fill="#315f4b" d="M16 1C0 10-1 24 16 39 33 24 32 10 16 1Z"/>
+                    <path stroke="#e2ecb8" fill="none" stroke-width="2" d="M16 8v24m0-11-7-7m7 13 7-9"/>
+                </svg>
+                <span>Eve</span>
+            </div>
+            <div id="startup-loading" role="status">
+                <span class="sr-only">Loading Eve</span>
+                <div class="startup-progress" aria-hidden="true"></div>
+            </div>
+            <div id="startup-error" hidden>
+                <p id="startup-message" role="alert"></p>
+                <button type="button" class="primary" id="startup-retry">Try again</button>
+            </div>
         </div>
-        
-
-        <nav class="nav">
-            <ul>
-                <li><a href="../index.html">Home</a></li>
-                <li><a href="transactions.html">Transactions</a></li>
-                <li><a href="accounts.html">Accounts</a></li>
-                <li><a href="categories.html">Categories</a></li>
-            </ul>
-        </nav>
-
-        <div class="addtransaction-btn">
-            <button type="button" class="add-transaction" onclick="window.location.href='add-transaction.html'">Add Transaction</button>
-        </div>
-    </header>
-
-    <main class="editTransaction-container">
-        <section class="editTransaction-title">
-        <h2>Edit transaction</h2>
-        <p>Update your transaction details.</p>
-        </section>
-
-        <div class="edit-layout">
-
-            <section class="editTransaction-panel">
-                <form id ="editTransaction-form">
-                    <fieldset class="transaction-type">
-                        <legend>Type</legend>
-                        <label>
-                            <input type="radio" name="type" value="expense" checked> Expense
-                        </label>
-                        <label>
-                            <input type="radio" name="type" value="income"> Income
-                        </label>
-                    </fieldset>
-
-                    <div class="form-group">
-                        <label for="amount">Amount (₱)</label>
-                        <input type="number" id="amount" name="amount" step="0.01" required placeholder="0.00">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="description">Description</label>
-                        <input type="text" id="description" name="description" placeholder="e.g. Lunch with team">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="date">Date</label>
-                        <input type="date" id="date" name="date" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="account">Account</label>
-                        <select id="account" name="account" required>
-                            <option value="">Choose an account</option>
-                            <!-- more options filled by script.js -->
-                            <!-- Cash
-                                Gcash
-                                BDO -->
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="category">Category</label>
-                        <select id="category" name="category" required>
-                            <option value="">Choose a category</option>
-                            <!-- more options filled by script.js -->
-                            <!-- income
-                                bills
-                                food
-                                transportation -->
-                        </select>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Save transaction</button>
-                        <a href="transactions.html" class="btn btn-outline">Cancel</a>
-                    </div>
-                </form>
-            </section>
-
-            <!-- Right: messages and delete confirmation -->
-            <aside class="panel messages-panel">
-                <h3>Messages</h3>
-
-                <!-- Success or error message. example messages:
-                Success: Transaction saved.
-                Error: Could not save. Please fill in all required fields. -->
-                <p id="message" class="message" role="status" hidden></p>
-                
-
-                <!-- Delete confirmation. script.js removes "hidden" to show it. -->
-                <div id="delete-confirm" class="confirm-box" hidden>
-                <h4>Delete this transaction?</h4>
-                <p>This can’t be undone.</p>
-                <div class="confirm-actions">
-                    <button type="button" id="cancel-delete" class="btn btn-outline">Cancel</button>
-                    <button type="button" id="confirm-delete" class="btn btn-danger">Delete</button>
-                </div>
-                </div>
-            </aside>
-
-        </div>
-
     </main>
+    <div id="app"></div>
+    <dialog id="dialog" aria-label="Eve form"></dialog>
+    <div id="toast" role="status"></div>
 </body>
 </html>

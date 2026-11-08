@@ -1,66 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Create your Eve account and start tracking your expenses and budget.">
-    <title>Eve | Create account</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Create your Eve account to track your everyday money.">
+    <title>Eve · Create account</title>
     <link rel="stylesheet" href="../assets/css/auth.css">
     <script src="../assets/js/auth-config.js" defer></script>
     <script src="../assets/js/auth.js" defer></script>
 </head>
 <body class="auth-page register-page">
-    <main class="auth-layout">
-        <aside class="auth-story" aria-label="About Eve">
-            <a class="brand" href="login.html" aria-label="Eve login">Eve<span>.</span></a>
-            <div class="story-content">
-                <p class="eyebrow">EXPENSE &amp; BUDGET TRACKER</p>
-                <h1>A little clarity. <br>A better everyday.</h1>
-                <p class="story-description">Make room for what matters. Keep your spending, savings, and everyday plans in one place.</p>
-                <div class="budget-illustration" aria-hidden="true">
-                    <div class="illustration-heading"><span>Your next chapter</span><span class="illustration-tag">Starts here</span></div>
-                    <p>Small steps. Real progress.</p>
-                    <div class="progress-track"><span></span></div>
-                    <div class="illustration-footer"><span>A clearer picture of your money</span><span>&#8599;</span></div>
-                </div>
-            </div>
-            <p class="story-footer">Your money. Your pace. Your Eve.</p>
-        </aside>
-        <section class="auth-main" aria-labelledby="form-title">
-            <div class="auth-card">
-                <p class="eyebrow form-eyebrow">LET'S GET STARTED</p>
-                <h2 id="form-title">Create your account</h2>
-                <p class="form-description">A fresh start for your finances.</p>
-                <div id="form-message" class="form-message" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-                <form id="register-form" class="auth-form">
-                    <div class="field">
-                        <label for="username">Username</label>
-                        <input id="username" name="username" type="text" placeholder="Your username" autocomplete="username" maxlength="50" required>
-                    </div>
-                    <div class="field">
-                        <label for="email">Email address</label>
-                        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
-                    </div>
-                    <div class="field">
-                        <label for="password">Password</label>
-                        <div class="password-field">
-                            <input id="password" name="password" type="password" placeholder="Create a password" autocomplete="new-password" minlength="8" maxlength="72" aria-describedby="password-hint" required>
-                            <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Show password" aria-pressed="false">Show</button>
-                        </div>
-                        <p id="password-hint" class="field-hint">Use at least 8 characters.</p>
-                    </div>
-                    <div class="field">
-                        <label for="confirm-password">Confirm password</label>
-                        <div class="password-field">
-                            <input id="confirm-password" name="confirmPassword" type="password" placeholder="Enter your password again" autocomplete="new-password" required>
-                            <button class="password-toggle" type="button" data-password-toggle="confirm-password" aria-label="Show confirm password" aria-pressed="false">Show</button>
-                        </div>
-                    </div>
-                    <button class="auth-submit" type="submit"><span>Create account</span><span aria-hidden="true">&#8594;</span></button>
-                </form>
-                <p class="auth-switch">Already have an account? <a href="login.html">Log in</a></p>
-            </div>
-            <p class="auth-footer">A little more intention. A lot more peace of mind.</p>
+    <main class="auth-shell">
+        <a class="brand" href="../../index.html" aria-label="Eve home">
+            "<svg viewBox=\"0 0 40 40\" aria-hidden=\"true\"><rect x=\"1\" y=\"1\" width=\"38\" height=\"38\" rx=\"13\" fill=\"currentColor\"/><path d=\"M10 20h19M20 10v19\" stroke=\"#e2ecb8\" stroke-width=\"3\" stroke-linecap=\"round\"/><circle cx=\"20\" cy=\"20\" r=\"5\" fill=\"#e2ecb8\"/></svg>"
+            <span>eve</span>
+        </a>
+        <section class="auth-card" aria-labelledby="form-title">
+            <p class="eyebrow">GET STARTED</p>
+            <h1 id="form-title">Make tracking easier.</h1>
+            <p class="form-description">Create an account to keep your money in view.</p>
+            <div id="form-message" class="form-message" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+            <form id="register-form" class="auth-form">
+                <label class="field" for="name">Your name
+                    <input id="name" name="name" type="text" placeholder="Jamie dela Cruz" autocomplete="name" maxlength="80" required>
+                </label>
+                <label class="field" for="username">Username
+                    <input id="username" name="username" type="text" placeholder="Choose a username" autocomplete="username" maxlength="50" required>
+                </label>
+                <label class="field" for="email">Email address
+                    <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+                </label>
+                <label class="field" for="password">Password
+                    <span class="password-field">
+                        <input id="password" name="password" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" maxlength="72" aria-describedby="password-hint" required>
+                        <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Show password" aria-pressed="false">Show</button>
+                    </span>
+                    <small id="password-hint">Use at least 8 characters.</small>
+                </label>
+                <label class="field" for="confirm-password">Confirm password
+                    <span class="password-field">
+                        <input id="confirm-password" name="confirmPassword" type="password" placeholder="Enter your password again" autocomplete="new-password" required>
+                        <button class="password-toggle" type="button" data-password-toggle="confirm-password" aria-label="Show confirm password" aria-pressed="false">Show</button>
+                    </span>
+                </label>
+                <button class="auth-submit" type="submit">Create account</button>
+            </form>
+            <p class="auth-switch">Already have an account? <a href="login.html">Log in</a></p>
         </section>
     </main>
 </body>

@@ -1,81 +1,41 @@
-<!DOCTYPE html>
-<html lang="en" data-session-pending>
+<!doctype html>
+<html lang="en" data-app-loading>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eve | Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Eve · Your money, in view</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/views.css">
     <script src="assets/js/auth-config.js" defer></script>
     <script src="assets/js/api.js" defer></script>
-    <script src="assets/js/session.js" defer></script>
     <script src="assets/js/data.js" defer></script>
+    <script src="assets/js/views.js" defer></script>
+    <script src="assets/js/account-flow.js" defer></script>
+    <script src="assets/js/session.js" defer></script>
 </head>
-<body>
-    <header>
-        <div class="logo">
-            <a href="index.html"><h1>Eve</h1></a>
+<body data-page="home" data-entry="">
+    <a class="skip" href="#main">Skip to content</a>
+    <main id="startup" class="startup">
+        <div class="startup-content">
+            <div class="startup-brand">
+                <svg viewBox="0 0 32 40" aria-hidden="true">
+                    <path fill="#315f4b" d="M16 1C0 10-1 24 16 39 33 24 32 10 16 1Z"/>
+                    <path stroke="#e2ecb8" fill="none" stroke-width="2" d="M16 8v24m0-11-7-7m7 13 7-9"/>
+                </svg>
+                <span>Eve</span>
+            </div>
+            <div id="startup-loading" role="status">
+                <span class="sr-only">Loading Eve</span>
+                <div class="startup-progress" aria-hidden="true"></div>
+            </div>
+            <div id="startup-error" hidden>
+                <p id="startup-message" role="alert"></p>
+                <button type="button" class="primary" id="startup-retry">Try again</button>
+            </div>
         </div>
-        
-
-        <nav class="nav">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="pages/transactions.html">Transactions</a></li>
-                <li><a href="pages/accounts.html">Accounts</a></li>
-                <li><a href="pages/categories.html">Categories</a></li>
-            </ul>
-        </nav>
-
-        <div class="addtransaction-btn">
-            <button type="button" class="add-transaction" onclick="window.location.href='pages/add-transaction.html'">Add Transaction</button>
-            <button type="button" class="logout-button" id="logout-button">Log out</button>
-        </div>
-    </header>
-
-    <p class="session-status" id="session-status" role="status" aria-live="polite">Checking your session...</p>
-    <section class="dashboard-intro" aria-labelledby="dashboard-heading">
-        <h2 id="dashboard-heading">Welcome back<span id="dashboard-username"></span></h2>
-        <p>Here's your money at a glance.</p>
-    </section>
-
-    <section class="summary-cards">
-      <div class="summary-card">
-        <p class="summary-label">Total balance</p>
-        <p class="summary-value" id="total-balance">₱0</p>
-        <p class="summary-note">across all accounts</p>
-      </div>
-
-      <div class="summary-card">
-        <p class="summary-label">Monthly Income</p>
-        <p class="summary-value income" id="month-income">₱0</p>
-      </div>
-
-      <div class="summary-card">
-        <p class="summary-label">Monthly Expenses</p>
-        <p class="summary-value" id="month-expenses">₱0</p>
-      </div>
-
-      <div class="summary-card">
-        <p class="summary-label">Net this month</p>
-        <p class="summary-value income" id="month-net">₱0</p>
-        <p class="summary-note">income minus expenses</p>
-      </div>
-    </section>
-
-
-    <table class="transaction-table">
-        <p>Transaction History</p>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Account</th>
-                <th>Amount</th>
-            </tr>
-        </thead>
-        <tbody id="transactionTableBody">
-        </tbody>
-    </table>
+    </main>
+    <div id="app"></div>
+    <dialog id="dialog" aria-label="Eve form"></dialog>
+    <div id="toast" role="status"></div>
 </body>
 </html>

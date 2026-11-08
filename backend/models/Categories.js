@@ -10,18 +10,36 @@ const categoriesSchema = new mongoose.Schema({
     },
     categName: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     categType: {
         type: String,
-        required: true
+        required: true,
+        enum: ['expense', 'income']
     },
     categBudget: {
         type: Number,
-        required: true,
-        validate: { validator: value => Number.isFinite(value) && value !== 0, message: 'Category budget must be a finite, non-zero number.' }
-    }
+        default: 0,
+        min: 0,
+        validate: { validator: value => Number.isFinite(value), message: 'Category budget must be a finite number.' }
+    },
+    templateKey: {
+        type: String,
+        default: null,
+        trim: true
+    },
+    subcategories: {
+        type: [{ type: String, trim: true }],
+        default: []
+    },
+    deletedAt: Date
 })
+
+categoriesSchema.index(
+    { user: 1, templateKey: 1 },
+    { unique: true, partialFilterExpression: { templateKey: { $type: 'string' } } }
+)
 
 const Categories =  mongoose.model("Category", categoriesSchema)
 

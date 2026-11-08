@@ -1,260 +1,478 @@
-(() => {
-    const api = window.EVE_API;
-    const state = { accounts: [], categories: [], transactions: [] };
-    const accountForm = document.getElementById('account-form');
-    const categoryForm = document.getElementById('category-form');
-    const transactionForm = document.getElementById('transaction-form') || document.getElementById('editTransaction-form');
-    const isEdit = transactionForm?.id === 'editTransaction-form';
-    const editId = new URLSearchParams(window.location.search).get('id');
-    let initialized = false;
-    let loading = false;
-    const message = document.createElement('p');
-    message.id = 'data-message';
-    message.className = 'session-status data-message';
-    message.setAttribute('role', 'status');
-    message.setAttribute('aria-live', 'polite');
-    message.hidden = true;
-    document.getElementById('session-status').after(message);
+const api = window.EVE_API;
+const GCASH_ICON = '▣';
+const state = { user: null, accounts: [], categories: [], deletedCategories: [], transactions: [] };
+const manilaDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit'
+});
+function today() {
+    const parts = Object.fromEntries(manilaDate.formatToParts(new Date()).map(part => [part.type, part.value]));
+    return [parts.year, parts.month, parts.day].join('-');
+}
+let page = 'home';
+let selectedDay = today();
+let month = selectedDay.slice(0, 7);
+let calendarMonth = month;
+let hiddenBalances = false;
+let statType = 'all';
+let statMode = 'currency';
+let filters = {};
+let ready = false;
+let loading = false;
+let returnFocus;
 
-    const money = value => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
-    const accountName = id => state.accounts.find(item => item._id === id)?.accName || 'Unavailable account';
-    const categoryName = id => state.categories.find(item => item._id === id)?.categName || 'Unavailable category';
-    const signedAmount = item => (item.type === 'income' ? 1 : -1) * item.amount;
-    const balance = account => account.accAmount + state.transactions.filter(item => item.account === account._id).reduce((sum, item) => sum + signedAmount(item), 0);
+const pesoFormat = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+const money = amount => pesoFormat.format(amount);
+const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[char]));
+const cents = amount => Math.round(Number(amount) * 100);
+const total = (records, type) => records.filter(record => record.type === type)
+    .reduce((sum, record) => sum + cents(record.amount), 0) / 100;
+const monthlyTransactions = () => state.transactions.filter(record => record.date.startsWith(month));
+const balance = account => (cents(account.start) + state.transactions
+    .filter(record => record.account === account.id)
+    .reduce((sum, record) => sum + (['income', 'transfer-in'].includes(record.type) ? 1 : -1) * cents(record.amount), 0)) / 100;
 
-    function showMessage(text, success = false) {
-        message.textContent = text;
-        message.dataset.type = success ? 'success' : 'error';
-        message.hidden = !text;
-    }
-
-    function setBusy(form, busy) {
-        if (!form) return;
-        form.querySelectorAll('[type="submit"]').forEach(button => { button.disabled = busy; });
-        form.setAttribute('aria-busy', String(busy));
-    }
-
-    function options(select, records, label) {
-        if (!select) return;
-        const selected = select.value;
-        while (select.options.length > 1) select.remove(1);
-        for (const record of records) select.add(new Option(record[label], record._id));
-        select.value = selected;
-    }
-
-    function card(title, details, amount) {
-        const element = document.createElement('article');
-        element.className = 'account-card';
-        const heading = document.createElement('h3');
-        heading.textContent = title;
-        const detail = document.createElement('p');
-        detail.textContent = details;
-        const value = document.createElement('p');
-        value.className = 'account-balance';
-        value.textContent = money(amount);
-        element.append(heading, detail, value);
-        return element;
-    }
-
-    function renderCards() {
-        const accounts = document.getElementById('account-cards');
-        if (accounts) {
-            accounts.replaceChildren(...state.accounts.map(account => card(account.accName, account.accType, balance(account))));
-            if (!state.accounts.length) accounts.textContent = 'No saved accounts yet. Add your first account below.';
+function toast(message, error = false) {
+    let element = document.querySelector('#toast');
+    if (dialog.open) {
+        element = dialog.querySelector('.dialog-feedback');
+        if (!element) {
+            element = document.createElement('p');
+            element.className = 'dialog-feedback';
+            dialog.append(element);
         }
-        const categories = document.getElementById('category-cards');
-        if (categories) {
-            categories.replaceChildren(...state.categories.map(category => card(category.categName, `${category.categType} · Budget`, category.categBudget)));
-            if (!state.categories.length) categories.textContent = 'No saved categories yet. Add your first category below.';
-        }
+        element.setAttribute('role', error ? 'alert' : 'status');
+        element.classList.toggle('error-feedback', error);
     }
+    element.textContent = message;
+    element.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => element.classList.remove('show'), 3500);
+}
 
-    function renderTransactions() {
-        const body = document.getElementById('transactionTable-body') || document.getElementById('transactionTableBody');
-        if (!body) return;
-        const hasActions = body.id === 'transactionTable-body';
-        const filter = document.getElementById('filter-form');
-        const records = state.transactions.filter(item => {
-            if (!filter) return true;
-            const date = item.date.slice(0, 10);
-            return (!filter.elements.account.value || item.account === filter.elements.account.value)
-                && (!filter.elements.category.value || item.category === filter.elements.category.value)
-                && (!filter.elements.from.value || date >= filter.elements.from.value)
-                && (!filter.elements.to.value || date <= filter.elements.to.value);
-        });
-        body.replaceChildren();
-        for (const item of records) {
-            const row = document.createElement('tr');
-            for (const value of [item.date.slice(0, 10), item.description || '—', categoryName(item.category), accountName(item.account), money(signedAmount(item))]) {
-                const cell = document.createElement('td');
-                cell.textContent = value;
-                row.append(cell);
-            }
-            if (hasActions) {
-                const actions = document.createElement('td');
-                const edit = document.createElement('a');
-                edit.href = `edit-transaction.html?id=${encodeURIComponent(item._id)}`;
-                edit.textContent = 'Edit';
-                const remove = document.createElement('button');
-                remove.type = 'button';
-                remove.className = 'btn btn-danger';
-                remove.textContent = 'Delete';
-                remove.addEventListener('click', async () => {
-                    if (!window.confirm('Delete this transaction?')) return;
-                    remove.disabled = true;
-                    try {
-                        await api.request(`/transaction/${item._id}`, { method: 'DELETE' });
-                        state.transactions = state.transactions.filter(record => record._id !== item._id);
-                        renderTransactions();
-                        showMessage('Transaction deleted.', true);
-                    } catch (error) {
-                        showMessage(error.message);
-                        remove.disabled = false;
-                    }
-                });
-                actions.append(edit, ' ', remove);
-                row.append(actions);
-            }
-            body.append(row);
-        }
-        if (!records.length) {
-            const cell = document.createElement('td');
-            cell.colSpan = hasActions ? 6 : 5;
-            cell.textContent = 'No transactions to display.';
-            const row = document.createElement('tr');
-            row.append(cell);
-            body.append(row);
-        }
-    }
+function transactionRows(record) {
+    const base = { ...record, id: record._id, date: record.date.slice(0, 10) };
+    if (record.type !== 'transfer') return [base];
 
-    function renderDashboard() {
-        if (!document.getElementById('total-balance')) return;
-        const today = new Date();
-        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        const monthly = state.transactions.filter(item => item.date.startsWith(month));
-        const income = monthly.filter(item => item.type === 'income').reduce((sum, item) => sum + item.amount, 0);
-        const expenses = monthly.filter(item => item.type !== 'income').reduce((sum, item) => sum + item.amount, 0);
-        for (const [id, amount] of Object.entries({ 'total-balance': state.accounts.reduce((sum, account) => sum + balance(account), 0), 'month-income': income, 'month-expenses': expenses, 'month-net': income - expenses })) {
-            document.getElementById(id).textContent = money(amount);
+    const source = state.accounts.find(account => account.id === record.account);
+    const destination = state.accounts.find(account => account.id === record.otherAccount);
+    const transfer = { ...base, recordId: base.id, category: 'transfer', note: base.description };
+    const rows = [
+        {
+            ...transfer,
+            id: base.id + '-out',
+            type: 'transfer-out',
+            description: base.description || 'Transfer to ' + (destination?.name || 'account')
+        },
+        {
+            ...transfer,
+            id: base.id + '-in',
+            type: 'transfer-in',
+            account: record.otherAccount,
+            otherAccount: record.account,
+            description: base.description || 'Transfer from ' + (source?.name || 'account')
         }
-    }
-
-    function onSubmit(form, save) {
-        if (!form) return;
-        form.addEventListener('submit', async event => {
-            event.preventDefault();
-            if (!initialized || form.querySelector('[type="submit"]').disabled || !form.reportValidity()) return;
-            setBusy(form, true);
-            showMessage('');
-            try {
-                await save();
-            } catch (error) {
-                showMessage(error.message);
-            } finally {
-                setBusy(form, false);
-            }
+    ];
+    if (base.fee > 0) {
+        const bills = [...state.categories, ...state.deletedCategories]
+            .find(category => category.templateKey === 'bills');
+        rows.push({
+            ...base,
+            id: base.id + '-fee',
+            recordId: base.id,
+            type: 'expense',
+            amount: base.fee,
+            description: 'Transfer fee',
+            category: bills?.id
         });
     }
+    return rows;
+}
 
-    function nonZeroAmount(raw) {
-        const value = Number(raw.replace(/,/g, '').trim());
-        if (!Number.isFinite(value) || value === 0) throw new Error('Enter a valid, non-zero amount.');
-        return value;
-    }
-
-    onSubmit(accountForm, async () => {
-        const account = await api.request('/account', { method: 'POST', body: {
-            accName: accountForm.elements.name.value.trim(),
-            accAmount: nonZeroAmount(accountForm.elements.startingBalance.value),
-            accType: accountForm.elements.type.value,
-        } });
-        state.accounts.push(account);
-        renderCards();
-        accountForm.reset();
-        showMessage('Account saved.', true);
-    });
-
-    onSubmit(categoryForm, async () => {
-        const category = await api.request('/categories', { method: 'POST', body: {
-            categName: categoryForm.elements.categName.value.trim(),
-            categType: categoryForm.elements.categType.value,
-            categBudget: nonZeroAmount(categoryForm.elements.categBudget.value),
-        } });
-        state.categories.push(category);
-        renderCards();
-        categoryForm.reset();
-        showMessage('Category saved.', true);
-    });
-
-    onSubmit(transactionForm, async () => {
-        const fields = transactionForm.elements;
-        const body = {
-            type: fields.type.value,
-            amount: nonZeroAmount(fields.amount.value),
-            description: fields.description.value.trim(),
-            date: fields.date.value,
-            account: fields.account.value,
-            category: fields.category.value,
+async function loadData() {
+    const [accounts, categories, transactions] = await Promise.all([
+        api.request('/account'), api.request('/categories?includeDeleted=true'), api.request('/transaction')
+    ]);
+    state.accounts = accounts.map(account => ({
+        id: account._id, name: account.accName, type: account.accType, start: account.accAmount,
+        classification: account.accClass,
+        icon: account.accName.trim().toLowerCase() === 'gcash' ? GCASH_ICON : account.accIcon,
+        note: account.accNote
+    }));
+    const categoryList = categories.map(category => {
+        const template = CATEGORY_TEMPLATES.find(item => item.id === category.templateKey);
+        return {
+            id: category._id, name: category.categName, type: category.categType.toLowerCase(),
+            budget: category.categBudget, templateKey: category.templateKey, deleted: Boolean(category.deletedAt),
+            glyph: template?.glyph || category.templateKey || 'categories',
+            color: template?.color || '#829562', subcategories: category.subcategories || []
         };
-        await api.request(isEdit ? `/transaction/${encodeURIComponent(editId)}` : '/transaction', { method: isEdit ? 'PUT' : 'POST', body });
-        window.location.assign('transactions.html');
     });
+    state.categories = categoryList.filter(category => !category.deleted);
+    state.deletedCategories = categoryList.filter(category => category.deleted);
+    state.transactions = transactions.flatMap(transactionRows);
+}
 
-    document.getElementById('filter-form')?.addEventListener('submit', event => {
-        event.preventDefault();
-        renderTransactions();
-    });
+function findCategory(id) {
+    return state.categories.find(category => category.id === id) ||
+        state.deletedCategories.find(category => category.id === id);
+}
 
-    async function loadPage() {
-        if (loading) return;
-        loading = true;
-        initialized = false;
-        document.documentElement.setAttribute('data-session-pending', '');
-        message.textContent = 'Loading your saved data...';
-        message.dataset.type = 'info';
-        message.hidden = false;
-        [accountForm, categoryForm, transactionForm].forEach(form => setBusy(form, true));
-        try {
-            [state.accounts, state.categories, state.transactions] = await Promise.all([
-                api.request('/account'), api.request('/categories'), api.request('/transaction'),
-            ]);
-            renderCards();
-            options(document.getElementById('filter-account'), state.accounts, 'accName');
-            options(document.getElementById('filter-category'), state.categories, 'categName');
-            renderTransactions();
-            renderDashboard();
-            if (transactionForm) {
-                options(transactionForm.elements.account, state.accounts, 'accName');
-                options(transactionForm.elements.category, state.categories, 'categName');
-                if (isEdit) {
-                    if (!editId) throw new Error('Choose a transaction from the Transactions page to edit.');
-                    const item = await api.request(`/transaction/${encodeURIComponent(editId)}`);
-                    for (const name of ['amount', 'description', 'account', 'category', 'type']) transactionForm.elements[name].value = item[name] ?? '';
-                    transactionForm.elements.date.value = item.date.slice(0, 10);
-                } else if (!transactionForm.elements.date.value) {
-                    const today = new Date();
-                    transactionForm.elements.date.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                }
-                if (!state.accounts.length || !state.categories.length) throw new Error('Add an account and a category using the navigation above before saving a transaction.');
-            }
-            initialized = true;
-            document.documentElement.removeAttribute('data-session-pending');
-            showMessage('');
-            [accountForm, categoryForm, transactionForm].forEach(form => setBusy(form, false));
-        } catch (error) {
-            showMessage(error.message);
-            const retry = document.createElement('button');
-            retry.type = 'button';
-            retry.className = 'session-retry';
-            retry.textContent = 'Try again';
-            retry.addEventListener('click', () => { showMessage(''); loadPage(); });
-            message.append(' ', retry);
-        } finally {
-            loading = false;
+function transactionCategories(type, originalCategoryId) {
+    const choices = state.categories.filter(category => category.type === type);
+    const original = state.deletedCategories.find(category => category.id === originalCategoryId);
+    if (original?.type === type) choices.push(original);
+    return choices;
+}
+
+async function persist(path, options) {
+    const result = await api.request(path, options);
+    try {
+        if (options.body?.recurring) await api.request('/transaction/recurring/sync', { method: 'POST' });
+        await loadData();
+        render();
+    } catch (error) {
+        // The mutation succeeded. Closing the form avoids duplicate saves on retry.
+        ready = false;
+        document.querySelector('#dialog').close();
+        showLoadError('Your change was saved. ' + error.message);
+    }
+    return result;
+}
+
+function showStartup() {
+    document.documentElement.setAttribute('data-app-loading', '');
+    document.getElementById('startup-error').hidden = true;
+    document.getElementById('startup-loading').hidden = false;
+}
+
+function showLoadError(message, retry = start) {
+    document.documentElement.setAttribute('data-app-loading', '');
+    document.getElementById('startup-loading').hidden = true;
+    document.getElementById('startup-error').hidden = false;
+    document.getElementById('startup-message').textContent = message;
+
+    const retryButton = document.getElementById('startup-retry');
+    retryButton.onclick = retry;
+    retryButton.focus();
+}
+
+async function start() {
+    if (loading || !window.EVE_SESSION?.user) return;
+    loading = true;
+    showStartup();
+    try {
+        state.user = window.EVE_SESSION.user;
+        await Promise.all([
+            api.request('/categories/defaults', { method: 'POST' }),
+            api.request('/transaction/recurring/sync', { method: 'POST' })
+        ]);
+        await loadData();
+        render();
+        ready = true;
+        document.documentElement.removeAttribute('data-app-loading');
+
+        const entry = document.body.dataset.entry;
+        if (entry && !location.hash && !start.openedEntry) {
+            start.openedEntry = true;
+            const id = new URLSearchParams(location.search).get('id');
+            if (entry === 'add') openForm('transaction');
+            else if (state.transactions.some(record => record.id === id)) openForm('transaction', id);
+            else toast('That transaction was not found.');
         }
+    } catch (error) {
+        ready = false;
+        showLoadError(error.message);
+    } finally {
+        loading = false;
+    }
+}
+
+window.addEventListener('eve:session-ready', start);
+window.addEventListener('hashchange', () => { if (ready) render(); });
+
+const dialog = document.querySelector('#dialog');
+
+function presentDialog() {
+    const header = dialog.querySelector('.flow-head, .entry-top, .account-modal-head');
+    if (header && !header.nextElementSibling?.classList.contains('dialog-body')) {
+        const layout = header.parentElement;
+        if (layout !== dialog) layout.classList.add('dialog-layout');
+
+        const body = document.createElement('div');
+        body.className = 'dialog-body';
+        while (header.nextSibling) body.append(header.nextSibling);
+        header.after(body);
     }
 
-    [accountForm, categoryForm, transactionForm].forEach(form => setBusy(form, true));
-    window.addEventListener('eve:session-ready', loadPage);
-    if (window.EVE_SESSION.user) loadPage();
-})();
+    if (!dialog.open) dialog.showModal();
+}
+
+dialog.addEventListener('close', () => {
+    const action = returnFocus?.dataset.action;
+    const target = returnFocus?.isConnected ? returnFocus :
+        [...document.querySelectorAll('#app [data-action]')].find(element => element.dataset.action === action);
+    (target || document.querySelector('#main'))?.focus({ preventScroll: true });
+});
+document.querySelector('.skip').addEventListener('click', event => {
+    event.preventDefault();
+    document.querySelector('#main')?.focus();
+});
+
+function selectAccount(id) {
+    const form = dialog.querySelector('#entry');
+    if (!form?.elements.account) return;
+    form.elements.account.value = id;
+    form.querySelectorAll('.account-choice').forEach(button => {
+        const active = button.dataset.action === 'account-choice:' + id;
+        button.classList.toggle('selected', active);
+        button.setAttribute('aria-pressed', active);
+    });
+}
+
+function saveButton(button, save) {
+    if (button.disabled) return;
+    button.disabled = true;
+    return Promise.resolve().then(save).catch(error => toast(error.message, true))
+        .finally(() => { button.disabled = false; });
+}
+
+document.addEventListener('click', event => {
+    const button = event.target.closest('[data-action]');
+    if (!button) return;
+    const [action, ...parts] = button.dataset.action.split(':');
+    const id = parts.join(':');
+    if (button.closest('#app') && !dialog.open) returnFocus = button;
+
+    switch (action) {
+        case 'logout': api.logOut(); break;
+        case 'close': dialog.close(); break;
+        case 'category': openCategoryPicker(); break;
+        case 'category-picker-back':
+            if (dialog.dataset.categoryOrigin === 'page') dialog.close();
+            else openCategoryPicker();
+            break;
+        case 'custom-category': openCustomCategory(); break;
+        case 'quick-category': {
+            const template = CATEGORY_TEMPLATES.slice(6)[Number(id)];
+            if (!template) break;
+            const existing = state.categories.find(category => category.templateKey === template.id);
+            openCustomCategory(existing?.name || template.name, 'expense', existing?.id, { template });
+            break;
+        }
+        case 'category-edit': {
+            const category = state.categories.find(item => item.id === id);
+            if (category) openCustomCategory(category.name, category.type, id, { origin: 'page' });
+            break;
+        }
+        case 'category-delete': {
+            const confirmation = button.form.querySelector('.category-delete-confirmation');
+            confirmation.hidden = false;
+            button.setAttribute('aria-expanded', 'true');
+            confirmation.querySelector('button').focus();
+            break;
+        }
+        case 'cancel-category-delete': {
+            const trigger = button.form.querySelector('[data-action="category-delete"]');
+            button.closest('.category-delete-confirmation').hidden = true;
+            trigger.setAttribute('aria-expanded', 'false');
+            trigger.focus();
+            break;
+        }
+        case 'confirm-category-delete':
+            saveButton(button, async () => {
+                await persist('/categories/' + encodeURIComponent(id), { method: 'DELETE' });
+                if (dialog.open && dialog.contains(button)) dialog.close();
+                if (ready) toast('Category deleted.');
+            });
+            break;
+        case 'add-subcategory': {
+            const form = button.form;
+            const input = form.querySelector('#subcategory-input');
+            const items = categorySubcategoriesFromForm(form);
+            const value = input.value.trim();
+            if (!value) break;
+            if (items.some(item => item.toLowerCase() === value.toLowerCase())) {
+                toast('That subcategory is already listed.', true);
+            } else {
+                setCategorySubcategories(form, [...items, value]);
+                input.value = '';
+            }
+            input.focus();
+            break;
+        }
+        case 'remove-subcategory': {
+            const form = button.form;
+            const items = categorySubcategoriesFromForm(form);
+            items.splice(Number(id), 1);
+            setCategorySubcategories(form, items);
+            form.querySelector('#subcategory-input').focus();
+            break;
+        }
+        case 'transaction': openForm('transaction'); break;
+        case 'budget-add': openForm('transaction', '', id); break;
+        case 'edit': {
+            const record = state.transactions.find(item => item.id === id);
+            if (!record) break;
+            if (record.recordId) {
+                const transfer = state.transactions.find(item => item.recordId === record.recordId && item.type === 'transfer-out');
+                window.openTransfer?.(transfer.account, transfer);
+            } else openForm('transaction', id);
+            break;
+        }
+        case 'delete': {
+            const record = state.transactions.find(item => item.id === id);
+            if (!record) break;
+            dialog.innerHTML = '<div class="flow-head"><button type="button" data-action="close" aria-label="Close">×</button>' +
+                '<h2>Delete transaction?</h2><span></span></div><p>' +
+                (record.recordId ? 'This removes the transfer from both accounts, including any fee.' :
+                    record.recurring ? 'This removes the original record and stops future repeats. Past repeats stay saved.' :
+                        'This removes the record and updates your balances and budgets.') +
+                '</p><div class="form-actions">' + actionButton('Keep transaction', 'close') +
+                actionButton('Delete transaction', 'confirm-delete:' + (record.recordId || id), 'danger') + '</div>';
+            presentDialog();
+            break;
+        }
+        case 'confirm-delete':
+            saveButton(button, async () => {
+                await persist('/transaction/' + encodeURIComponent(id), { method: 'DELETE' });
+                if (dialog.open) dialog.close();
+                if (ready) toast('Transaction deleted.');
+            });
+            break;
+        case 'subchip':
+        case 'custom-description': {
+            const form = button.form;
+            const custom = action === 'custom-description';
+            form.elements.description.value = custom ? '' : id;
+            form.elements.customDescription.value = '';
+            form.querySelector('.custom-description').hidden = !custom;
+            form.querySelectorAll('.subchip').forEach(chip => {
+                chip.classList.toggle('selected', chip === button);
+                chip.setAttribute('aria-pressed', chip === button);
+            });
+            if (custom) form.elements.customDescription.focus();
+            break;
+        }
+        case 'account-choice': selectAccount(id); break;
+        case 'entry-expense':
+        case 'entry-income': {
+            const form = button.form;
+            const type = action.slice(6);
+            if (form.elements.type.value === type) break;
+            const original = state.transactions.find(record => record.id === form.dataset.id);
+            const choices = transactionCategories(type, original?.category);
+            if (!choices.length) {
+                toast('Add an ' + type + ' category first.', true);
+                break;
+            }
+            form.elements.category.innerHTML = options(choices, choices[0]?.id);
+            form.elements.type.value = type;
+            form.querySelectorAll('.type-switch button').forEach(item => {
+                item.classList.toggle('selected', item === button);
+                item.setAttribute('aria-pressed', item === button);
+            });
+            updateTransactionSubchips(choices[0]?.id);
+            break;
+        }
+        case 'amount-up':
+        case 'amount-down': {
+            const amount = button.form.elements.amount;
+            const current = Number(amount.value) || 0;
+            const next = cents(current) + (action === 'amount-up' ? 100 : -100);
+            amount.value = next > 0 ? String(next / 100) : '';
+            break;
+        }
+        case 'reset-filters': filters = {}; render(); break;
+        case 'toggle-balances': hiddenBalances = !hiddenBalances; render(); break;
+        case 'day': selectedDay = id; render(); break;
+        case 'prev-month':
+        case 'next-month': {
+            const [year, number] = calendarMonth.split('-').map(Number);
+            const date = new Date(year, number - 1 + (action === 'prev-month' ? -1 : 1), 1);
+            calendarMonth = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+            selectedDay = calendarMonth === today().slice(0, 7) ? today() : calendarMonth + '-01';
+            render();
+            break;
+        }
+        default:
+            if (action.startsWith('stat-')) { statType = action.slice(5); render(); }
+            if (action.startsWith('mode-')) { statMode = action.slice(5); render(); }
+    }
+});
+
+document.addEventListener('change', event => {
+    const input = event.target;
+    if (input.id === 'month' && input.value) {
+        month = input.value;
+        render();
+    }
+    if (input.id === 'entry-category') updateTransactionSubchips(input.value);
+    if (input.id === 'entry-type') {
+        const budget = input.form.elements.budget;
+        budget.closest('label').hidden = input.value === 'income';
+        budget.disabled = input.value === 'income';
+    }
+});
+
+document.addEventListener('keydown', event => {
+    if (event.target.name === 'amount' && event.target.closest('#entry') &&
+        ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        event.target.form.querySelector('[data-action="amount-' + (event.key === 'ArrowUp' ? 'up' : 'down') + '"]').click();
+    }
+    if (event.key === 'Enter' && event.target.id === 'subcategory-input') {
+        event.preventDefault();
+        event.target.form.querySelector('[data-action="add-subcategory"]').click();
+    }
+});
+
+document.addEventListener('submit', event => {
+    const form = event.target;
+    if (form.id !== 'filters' && form.id !== 'entry') return;
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(form));
+    if (form.id === 'filters') {
+        filters = values;
+        render();
+        return;
+    }
+
+    const id = form.dataset.id;
+    const method = id ? 'PUT' : 'POST';
+    const suffix = id ? '/' + encodeURIComponent(id) : '';
+    const submit = event.submitter || form.querySelector('button.primary');
+
+    if (form.dataset.kind === 'transaction') {
+        const description = (values.customDescription.trim() || values.description).trim();
+        if (!description) {
+            toast('Choose a subcategory or enter a description.', true);
+            form.querySelector('.subchip')?.focus();
+            return;
+        }
+        const body = {
+            amount: Number(values.amount), date: values.date, account: values.account,
+            category: values.category, description, type: values.type,
+            saveSubcategory: Boolean(values.customDescription.trim())
+        };
+        if (values.recurring !== undefined) body.recurring = values.recurring === 'yes';
+        saveButton(submit, async () => {
+            const result = await persist('/transaction' + suffix, { method, body });
+            if (dialog.open) dialog.close();
+            if (ready) toast(result.warning || 'Transaction saved.');
+        });
+    } else {
+        const body = {
+            categName: values.name.trim(), categType: form.elements.type.value,
+            categBudget: form.elements.type.value === 'expense' ? Number(values.budget || 0) : 0,
+            subcategories: categorySubcategoriesFromForm(form)
+        };
+        if (form.dataset.newId) body.templateKey = form.dataset.newId;
+        saveButton(submit, async () => {
+            await persist('/categories' + suffix, { method, body });
+            if (dialog.open) dialog.close();
+            if (ready) toast('Category saved.');
+        });
+    }
+});

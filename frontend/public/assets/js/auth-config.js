@@ -1,4 +1,4 @@
-// Change this URL if your backend runs on a different host or port.
+// Live Server on port 5502 uses the separate local Express server.
 window.EVE_CONFIG = {
-    apiBaseUrl: `http://localhost:8000/api/users`,
+    apiBaseUrl: window.location.port === '5502' ? 'http://localhost:8000/api/users' : '/api/users',
 };
