@@ -10,7 +10,7 @@ const transactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['expense', 'income'],
+        enum: ['expense', 'income', 'transfer'],
         default: 'expense'
     },
     amount: {
@@ -33,9 +33,36 @@ const transactionSchema = new mongoose.Schema({
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
-        required: true
-    }
+        required: function() { return this.type !== 'transfer' }
+    },
+    otherAccount: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Account'
+    },
+    fee: {
+        type: Number,
+        default: 0,
+        validate: { validator: value => Number.isFinite(value) && value >= 0, message: 'Transfer fee must be zero or greater.' }
+    },
+    recurring: {
+        type: Boolean,
+        default: false
+    },
+    recurringFrom: Date,
+    recurringSource: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Transaction'
+    },
+    occurrenceDate: Date,
+    occurrenceMonth: Date,
+    skippedDates: [Date],
+    deletedAt: Date
 })
+
+transactionSchema.index(
+    { user: 1, recurringSource: 1, occurrenceMonth: 1 },
+    { unique: true, partialFilterExpression: { recurringSource: { $exists: true } } }
+)
 
 const Transaction = mongoose.model("Transaction", transactionSchema)
 

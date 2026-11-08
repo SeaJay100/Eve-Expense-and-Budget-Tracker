@@ -1,11 +1,14 @@
 import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
+import { fileURLToPath } from "node:url"
 import { connectDB } from "./config/db.js"
 import authRoute from './routes/auth.js'
 import transactionRoute from './routes/transaction.js'
 import accountRoute from './routes/account.js'
 import categoriesRoute from './routes/categories.js'
+import Transaction from './models/Transaction.js'
+import Category from './models/Categories.js'
 
 dotenv.config()
 const app = express()
@@ -24,16 +27,10 @@ app.use("/api/users", authRoute)
 app.use("/api", transactionRoute)
 app.use("/api", accountRoute)
 app.use("/api", categoriesRoute)
+app.use(express.static(fileURLToPath(new URL("../frontend/public/", import.meta.url))))
 
 
-connectDB()
-
-app.listen(PORT, () => {
-    try {
-        console.log(`The port is running on ${PORT}`)
-        console.log(`http://localhost:${PORT}/`)
-    } catch (err) {
-        console.log({message: err})
-    }
-})
+await connectDB()
+await Promise.all([Transaction.init(), Category.init()])
+app.listen(PORT, () => console.log(`Eve is running at http://localhost:${PORT}/`))
 

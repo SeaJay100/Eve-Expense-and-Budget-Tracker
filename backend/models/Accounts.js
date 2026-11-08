@@ -16,11 +16,28 @@ const accountSchema = new mongoose.Schema({
     accAmount: {
         type: Number,
         required: true,
-        validate: { validator: value => Number.isFinite(value) && value !== 0, message: 'Account balance must be a finite, non-zero number.' }
+        default: 0,
+        validate: { validator: Number.isFinite, message: 'Account balance must be a finite number.' }
     },
     accType: {
         type: String,
-        required: true
+        required: true,
+        trim: true
+    },
+    accClass: {
+        type: String,
+        enum: ['asset', 'liability'],
+        default: 'asset'
+    },
+    accIcon: {
+        type: String,
+        trim: true,
+        maxlength: 8
+    },
+    accNote: {
+        type: String,
+        trim: true,
+        maxlength: 120
     }
 })
 

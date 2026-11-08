@@ -8,10 +8,21 @@ const router = express.Router()
 //Register
 router.post('/register', async (req, res) => {
     try{
-        const {username, email, password} = req.body || {}
+        const { name, password } = req.body || {}
+        const username = typeof req.body?.username === 'string' ? req.body.username.trim() : ''
+        const email = typeof req.body?.email === 'string' ? req.body.email.trim() : ''
 
-        if (!username || !email || !password){
+        if (!username || !email || typeof password !== 'string' || !password){
             return res.status(400).json({message: "Please fill all the fields."})
+        }
+        if (username.length > 50 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({message: "Enter a valid username and email address."})
+        }
+        if (password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
+            return res.status(400).json({message: "Use at least 8 characters and at most 72 bytes for your password."})
+        }
+        if (name !== undefined && (typeof name !== 'string' || !name.trim() || name.trim().length > 80)) {
+            return res.status(400).json({message: "Please enter a valid name."})
         }
         
         const userExist = await User.findOne({email})
@@ -24,11 +35,12 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({message: "Username already exists."})
         }
 
-        const user = await User.create({username, email, password})
+        const user = await User.create({username, name: name?.trim(), email, password})
         const token = generateToken(user._id)
         res.status(201).json({
             id: user._id,
             username: user.username,
+            name: user.name || user.username,
             email: user.email,
             token,
         })
@@ -44,9 +56,10 @@ router.post('/register', async (req, res) => {
 //Login
 router.post('/login', async (req, res) => {
     try {
-        const {email, password} = req.body || {}
+        const password = req.body?.password
+        const email = typeof req.body?.email === 'string' ? req.body.email.trim() : ''
 
-        if (!email || !password){
+        if (!email || typeof password !== 'string' || !password){
             return res.status(400).json({message: "Please fill all the fields."})
         }
         const user = await User.findOne({email})
@@ -58,6 +71,7 @@ router.post('/login', async (req, res) => {
         res.status(200).json({
             id: user._id,
             username: user.username,
+            name: user.name || user.username,
             email: user.email,
             token,
         })

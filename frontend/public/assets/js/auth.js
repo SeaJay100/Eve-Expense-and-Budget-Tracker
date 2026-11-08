@@ -3,8 +3,7 @@
     const message = document.getElementById("form-message");
     const isRegister = form.id === "register-form";
     const submitButton = form.querySelector('[type="submit"]');
-    const submitLabel = submitButton.querySelector("span");
-    const defaultLabel = submitLabel.textContent;
+    const defaultLabel = submitButton.textContent;
     const password = form.elements.password;
     const confirmation = form.elements.confirmPassword;
 
@@ -55,14 +54,16 @@
         const email = form.elements.email;
         email.value = email.value.trim();
         if (isRegister) {
+            const name = form.elements.name;
             const username = form.elements.username;
+            name.value = name.value.trim();
             username.value = username.value.trim();
         }
         if (!form.reportValidity()) return;
 
         message.hidden = true;
         submitButton.disabled = true;
-        submitLabel.textContent = isRegister ? "Creating account..." : "Logging in...";
+        submitButton.textContent = isRegister ? "Creating account..." : "Logging in...";
         form.setAttribute("aria-busy", "true");
 
         const controller = new AbortController();
@@ -70,7 +71,10 @@
 
         try {
             const payload = { email: email.value, password: password.value };
-            if (isRegister) payload.username = form.elements.username.value;
+            if (isRegister) {
+                payload.name = form.elements.name.value;
+                payload.username = form.elements.username.value;
+            }
             const response = await fetch(`${window.EVE_CONFIG.apiBaseUrl}/${isRegister ? "register" : "login"}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -107,7 +111,7 @@
         } finally {
             window.clearTimeout(timeout);
             submitButton.disabled = false;
-            submitLabel.textContent = defaultLabel;
+            submitButton.textContent = defaultLabel;
             form.removeAttribute("aria-busy");
         }
     });
