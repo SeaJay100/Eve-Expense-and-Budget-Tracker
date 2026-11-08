@@ -97,7 +97,8 @@ const iconPaths = {
     transactions: 'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4',
     accounts: 'M3 6h18v15H3ZM3 10h18m-5 5h2',
     categories: 'M3 3h7v7H3Zm11 0h7v7h-7ZM3 14h7v7H3Zm11 0h7v7h-7Z',
-    plus: 'M12 5v14M5 12h14'
+    plus: 'M12 5v14M5 12h14',
+    logout: 'M10 4H4v16h6m4-13 5 5-5 5M9 12h10'
 };
 
 function icon(name) {
@@ -591,7 +592,7 @@ function openForm(kind, id, categoryId = '') {
             <button type="button" data-action="close" aria-label="Close">×</button>
             <h2>Add an account first</h2><span></span>
         </div><p>Choose an account before recording a transaction.</p>
-        ${actionButton('Cancel', 'close')} ${actionButton('Add account', 'first-account', 'primary')}`;
+        ${actionButton('Cancel', 'cancel')} ${actionButton('Add account', 'first-account', 'primary')}`;
         presentDialog();
         return;
     }
@@ -601,7 +602,7 @@ function openForm(kind, id, categoryId = '') {
             <button type="button" data-action="close" aria-label="Close">×</button>
             <h2>Add a category first</h2><span></span>
         </div><p>Choose a category before recording a transaction.</p>
-        ${actionButton('Cancel', 'close')} ${actionButton('Add category', 'category', 'primary')}`;
+        ${actionButton('Cancel', 'cancel')} ${actionButton('Add category', 'category', 'primary')}`;
         presentDialog();
         return;
     }
@@ -665,7 +666,10 @@ function openForm(kind, id, categoryId = '') {
                 <option value="no">No</option><option value="yes" ${transaction?.recurring ? 'selected' : ''}>Monthly</option>
             </select></label>
         </div>
-        <div class="form-actions">${actionButton('Cancel', 'close')}<button class="primary">Save transaction</button></div>
+        <div class="form-actions transaction-actions">
+            ${actionButton('Cancel', 'cancel')}
+            <button class="primary">Save transaction</button>
+        </div>
     </form>`;
     presentDialog();
     dialog.querySelector('[autofocus]')?.focus({ preventScroll: true });
@@ -705,7 +709,7 @@ function render() {
     };
 
     host.innerHTML = `<aside>
-        <a class="brand" href="#home">
+        <a class="brand" href="#home" data-action="go-home" aria-label="Eve home">
             <svg viewBox="0 0 32 40" aria-hidden="true">
                 <path fill="#315f4b" d="M16 1C0 10-1 24 16 39 33 24 32 10 16 1Z"/>
                 <path stroke="#e2ecb8" fill="none" stroke-width="2" d="M16 8v24m0-11-7-7m7 13 7-9"/>
@@ -714,11 +718,11 @@ function render() {
         <nav aria-label="Main navigation">${navigation}</nav>
         <div class="bottom">
             <div class="sidebar-note">A fresh view of your money.<br>Make tracking your money easier.</div>
+            ${actionButton(icon('logout') + ' Log out', 'logout', 'sidebar-logout')}
             <div class="profile">
                 <span class="avatar" aria-hidden="true">${esc(initials)}</span>
                 <div class="profile-details"><b>${esc(name)}</b><br><small class="muted">Personal workspace</small></div>
             </div>
-            ${actionButton('Log out', 'logout', 'sidebar-logout quiet')}
         </div>
     </aside>
     <main id="main" tabindex="-1">

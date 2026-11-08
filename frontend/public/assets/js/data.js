@@ -246,7 +246,9 @@ document.addEventListener('click', event => {
     if (button.closest('#app') && !dialog.open) returnFocus = button;
 
     switch (action) {
+        case 'go-home': window.scrollTo(0, 0); break;
         case 'logout': api.logOut(); break;
+        case 'cancel':
         case 'close': dialog.close(); break;
         case 'category': openCategoryPicker(); break;
         case 'category-picker-back':

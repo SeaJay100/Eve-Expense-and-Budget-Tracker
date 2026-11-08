@@ -11,14 +11,36 @@
 </head>
 <body class="auth-page login-page">
     <main class="auth-shell">
-        <a class="brand" href="../../index.html" aria-label="Eve home">
-            "<svg viewBox=\"0 0 40 40\" aria-hidden=\"true\"><rect x=\"1\" y=\"1\" width=\"38\" height=\"38\" rx=\"13\" fill=\"currentColor\"/><path d=\"M10 20h19M20 10v19\" stroke=\"#e2ecb8\" stroke-width=\"3\" stroke-linecap=\"round\"/><circle cx=\"20\" cy=\"20\" r=\"5\" fill=\"#e2ecb8\"/></svg>"
-            <span>eve</span>
-        </a>
+        <section class="auth-intro" aria-labelledby="intro-title">
+            <a class="brand" href="../index.html" aria-label="Eve home">
+                <span class="brand-mark"><img src="../assets/eve-mark.svg" width="24" height="30" alt=""></span>
+                <span>Eve</span>
+            </a>
+            <div class="intro-copy">
+                <h1 id="intro-title">Know where your money goes.</h1>
+                <p>Track your spending, plan your monthly budget, and see what’s left.</p>
+            </div>
+            <figure class="budget-example">
+                <figcaption>
+                    <span>Monthly budget</span>
+                    <span class="example-label">Example</span>
+                </figcaption>
+                <meter min="0" max="12000" value="8450" aria-label="Example budget spent"></meter>
+                <dl class="budget-figures">
+                    <div>
+                        <dt>Spent</dt>
+                        <dd>₱8,450</dd>
+                    </div>
+                    <div>
+                        <dt>Left to spend</dt>
+                        <dd>₱3,550</dd>
+                    </div>
+                </dl>
+            </figure>
+        </section>
         <section class="auth-card" aria-labelledby="form-title">
-            <p class="eyebrow">WELCOME BACK</p>
-            <h1 id="form-title">Your money, in view.</h1>
-            <p class="form-description">Log in to pick up where you left off.</p>
+            <h2 id="form-title">Log in to Eve</h2>
+            <p class="form-description">Use your email and password to open your dashboard.</p>
             <div id="form-message" class="form-message" role="status" aria-live="polite" aria-atomic="true" hidden></div>
             <form id="login-form" class="auth-form">
                 <label class="field" for="email">Email address
