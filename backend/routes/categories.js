@@ -13,7 +13,8 @@ const defaultCategories = [
     { templateKey: 'health', categName: 'Health', categType: 'expense', subcategories: ['Pharmacy', 'Doctor', 'Dental', 'Vision', 'Fitness'] },
     { templateKey: 'personalCare', categName: 'Personal Care', categType: 'expense', subcategories: ['Toiletries', 'Haircut', 'Skincare', 'Cosmetics', 'Personal products'] },
     { templateKey: 'salary', categName: 'Salary', categType: 'income', subcategories: ['Paycheck', 'Bonus', 'Commission', 'Allowance', 'Other income'] },
-    { templateKey: 'freelance', categName: 'Freelance', categType: 'income', subcategories: ['Design project', 'Consulting', 'Contract work', 'Tutoring', 'Other freelance'] }
+    { templateKey: 'freelance', categName: 'Freelance', categType: 'income', subcategories: ['Design project', 'Consulting', 'Contract work', 'Tutoring', 'Other freelance'] },
+    { templateKey: 'allowance', categName: 'Allowance', categType: 'income', subcategories: ['Weekly allowance', 'Monthly allowance', 'School allowance', 'Pocket money', 'Family support'] }
 ];
 
 const addableExpenseCategories = {

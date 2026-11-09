@@ -45,8 +45,16 @@ function monthlyDate(year, monthIndex, day) {
     return new Date(Date.UTC(year, monthIndex, Math.min(day, lastDay)));
 }
 
-async function ownedEntry(req, res, { account, category, type, keepDeletedCategory = false }) {
-    const userAccount = account && await Account.findOne({ _id: account, user: req.user._id });
+function accountQuery(req, accountId, allowedArchivedAccounts = []) {
+    const query = { _id: accountId, user: req.user._id };
+    if (!allowedArchivedAccounts.some(id => String(id) === String(accountId))) query.archivedAt = null;
+    return query;
+}
+
+async function ownedEntry(req, res, {
+    account, category, type, keepDeletedCategory = false, allowedArchivedAccounts = []
+}) {
+    const userAccount = account && await Account.findOne(accountQuery(req, account, allowedArchivedAccounts));
     if (!userAccount) {
         badRequest(res, 'Choose an account belonging to you.');
         return null;
@@ -130,8 +138,8 @@ router.post('/transfer', protect, async (req, res) => {
         }
 
         const [from, to] = await Promise.all([
-            Account.findOne({ _id: account, user: req.user._id }),
-            Account.findOne({ _id: otherAccount, user: req.user._id })
+            Account.findOne(accountQuery(req, account)),
+            Account.findOne(accountQuery(req, otherAccount))
         ]);
         if (!from || !to) return badRequest(res, 'Choose two accounts belonging to you.');
 
@@ -180,6 +188,13 @@ router.post('/transaction/recurring/sync', protect, async (req, res) => {
                         type: { $in: ['expense', 'income'] }
                     }, { $inc: { recurringSyncVersion: 1 } }, { new: true, session });
                     if (!source) return;
+
+                    const accountIsActive = await Account.exists({
+                        _id: source.account,
+                        user: req.user._id,
+                        archivedAt: null
+                    }).session(session);
+                    if (!accountIsActive) return;
 
                     const sourceDate = new Date(source.date);
                     const startMonth = sourceDate.getUTCFullYear() * 12 + sourceDate.getUTCMonth();
@@ -281,9 +296,10 @@ router.put('/transaction/:id', protect, async (req, res) => {
             if (!parsedDate || !account || !otherAccount || String(account) === String(otherAccount)) {
                 return badRequest(res, 'Choose two different accounts and a valid date.');
             }
+            const allowedArchivedAccounts = [transaction.account, transaction.otherAccount];
             const [from, to] = await Promise.all([
-                Account.findOne({ _id: account, user: req.user._id }),
-                Account.findOne({ _id: otherAccount, user: req.user._id })
+                Account.findOne(accountQuery(req, account, allowedArchivedAccounts)),
+                Account.findOne(accountQuery(req, otherAccount, allowedArchivedAccounts))
             ]);
             if (!from || !to) return badRequest(res, 'Choose two accounts belonging to you.');
             transaction.type = 'transfer';
@@ -301,7 +317,10 @@ router.put('/transaction/:id', protect, async (req, res) => {
             const account = req.body?.account ?? transaction.account;
             const category = req.body?.category ?? transaction.category;
             const keepDeletedCategory = String(category) === String(transaction.category);
-            const entry = await ownedEntry(req, res, { account, category, type, keepDeletedCategory });
+            const entry = await ownedEntry(req, res, {
+                account, category, type, keepDeletedCategory,
+                allowedArchivedAccounts: [transaction.account]
+            });
             if (!entry) return;
 
             if (req.body?.amount !== undefined) {

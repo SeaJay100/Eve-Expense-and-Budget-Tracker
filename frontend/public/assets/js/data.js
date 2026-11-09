@@ -1,5 +1,5 @@
 const api = window.EVE_API;
-const GCASH_ICON = '▣';
+const GCASH_ICON = 'G';
 const state = { user: null, accounts: [], categories: [], deletedCategories: [], transactions: [] };
 const manilaDate = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit'
@@ -103,6 +103,7 @@ async function loadData() {
     state.accounts = accounts.map(account => ({
         id: account._id, name: account.accName, type: account.accType, start: account.accAmount,
         classification: account.accClass,
+        archived: Boolean(account.archivedAt),
         icon: account.accName.trim().toLowerCase() === 'gcash' ? GCASH_ICON : account.accIcon,
         note: account.accNote
     }));

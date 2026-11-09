@@ -142,7 +142,9 @@ function openCustomCategory(name = '', type = 'expense', id = '', settings = {})
 }
 
 function openTransaction(id, categoryId = '') {
-    if (!state.accounts.length) {
+    const transaction = state.transactions.find(record => record.id === id);
+    const availableAccounts = state.accounts.filter(account => !account.archived || account.id === transaction?.account);
+    if (!availableAccounts.length) {
         dialog.innerHTML = `<div class="flow-head">
             <button type="button" data-action="close" aria-label="Close">×</button>
             <h2>Add an account first</h2><span></span>
@@ -151,7 +153,6 @@ function openTransaction(id, categoryId = '') {
         presentDialog();
         return;
     }
-    const transaction = state.transactions.find(record => record.id === id);
     if (!state.categories.length && !transaction) {
         dialog.innerHTML = `<div class="flow-head">
             <button type="button" data-action="close" aria-label="Close">×</button>
@@ -172,7 +173,7 @@ function openTransaction(id, categoryId = '') {
     const date = transaction?.date || (page === 'calendar' ? selectedDay :
         page === 'home' && month !== today().slice(0, 7) ? month + '-01' : today());
 
-    const accounts = state.accounts.map(account => {
+    const accounts = availableAccounts.map(account => {
         const active = account.id === accountId;
         const glyph = account.icon || ({ 'E-wallet': '◉', Bank: '▤' }[account.type]) || '₱';
         return `<button type="button" class="account-choice ${active ? 'selected' : ''}"
