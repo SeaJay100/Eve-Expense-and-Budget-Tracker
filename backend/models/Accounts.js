@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 const accountSchema = new mongoose.Schema({
     // The User ID of the person who owns this account.
@@ -12,12 +12,16 @@ const accountSchema = new mongoose.Schema({
         type: String,
         trim: true,
         required: true
-    } ,
+    },
     accAmount: {
         type: Number,
         required: true,
         default: 0,
         validate: { validator: Number.isFinite, message: 'Account balance must be a finite number.' }
+    },
+    balanceRevision: {
+        type: Number,
+        default: 0
     },
     accType: {
         type: String,
@@ -39,8 +43,8 @@ const accountSchema = new mongoose.Schema({
         trim: true,
         maxlength: 120
     }
-})
+});
 
-const Account =  mongoose.model("Account", accountSchema)
+const Account = mongoose.model('Account', accountSchema);
 
-export default Account
+export default Account;

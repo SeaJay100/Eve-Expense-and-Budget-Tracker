@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose from 'mongoose';
 
 const transactionSchema = new mongoose.Schema({
     // The User ID of the person who owns this transaction.
@@ -10,8 +10,13 @@ const transactionSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['expense', 'income', 'transfer'],
+        enum: ['expense', 'income', 'transfer', 'adjustment'],
         default: 'expense'
+    },
+    adjustmentDirection: {
+        type: String,
+        enum: ['increase', 'decrease'],
+        required: function() { return this.type === 'adjustment'; }
     },
     amount: {
         type: Number,
@@ -33,7 +38,7 @@ const transactionSchema = new mongoose.Schema({
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
-        required: function() { return this.type !== 'transfer' }
+        required: function() { return this.type === 'expense' || this.type === 'income'; }
     },
     otherAccount: {
         type: mongoose.Schema.Types.ObjectId,
@@ -48,6 +53,10 @@ const transactionSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    recurringSyncVersion: {
+        type: Number,
+        select: false
+    },
     recurringFrom: Date,
     recurringSource: {
         type: mongoose.Schema.Types.ObjectId,
@@ -57,13 +66,13 @@ const transactionSchema = new mongoose.Schema({
     occurrenceMonth: Date,
     skippedDates: [Date],
     deletedAt: Date
-})
+});
 
 transactionSchema.index(
     { user: 1, recurringSource: 1, occurrenceMonth: 1 },
     { unique: true, partialFilterExpression: { recurringSource: { $exists: true } } }
-)
+);
 
-const Transaction = mongoose.model("Transaction", transactionSchema)
+const Transaction = mongoose.model('Transaction', transactionSchema);
 
-export default Transaction
+export default Transaction;

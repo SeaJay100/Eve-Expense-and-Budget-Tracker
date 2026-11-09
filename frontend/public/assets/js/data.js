@@ -13,8 +13,6 @@ let selectedDay = today();
 let month = selectedDay.slice(0, 7);
 let calendarMonth = month;
 let hiddenBalances = false;
-let statType = 'all';
-let statMode = 'currency';
 let filters = {};
 let ready = false;
 let loading = false;
@@ -31,7 +29,7 @@ const total = (records, type) => records.filter(record => record.type === type)
 const monthlyTransactions = () => state.transactions.filter(record => record.date.startsWith(month));
 const balance = account => (cents(account.start) + state.transactions
     .filter(record => record.account === account.id)
-    .reduce((sum, record) => sum + (['income', 'transfer-in'].includes(record.type) ? 1 : -1) * cents(record.amount), 0)) / 100;
+    .reduce((sum, record) => sum + (['income', 'transfer-in', 'adjustment-in'].includes(record.type) ? 1 : -1) * cents(record.amount), 0)) / 100;
 
 function toast(message, error = false) {
     let element = document.querySelector('#toast');
@@ -53,6 +51,14 @@ function toast(message, error = false) {
 
 function transactionRows(record) {
     const base = { ...record, id: record._id, date: record.date.slice(0, 10) };
+    if (record.type === 'adjustment') {
+        return [{
+            ...base,
+            type: record.adjustmentDirection === 'increase' ? 'adjustment-in' : 'adjustment-out',
+            category: 'adjustment',
+            description: record.description || 'Balance adjustment'
+        }];
+    }
     if (record.type !== 'transfer') return [base];
 
     const source = state.accounts.find(account => account.id === record.account);
@@ -101,11 +107,10 @@ async function loadData() {
         note: account.accNote
     }));
     const categoryList = categories.map(category => {
-        const template = CATEGORY_TEMPLATES.find(item => item.id === category.templateKey);
+        const template = CATEGORY_TEMPLATES.find(item => item.templateKey === category.templateKey);
         return {
             id: category._id, name: category.categName, type: category.categType.toLowerCase(),
             budget: category.categBudget, templateKey: category.templateKey, deleted: Boolean(category.deletedAt),
-            glyph: template?.glyph || category.templateKey || 'categories',
             color: template?.color || '#829562', subcategories: category.subcategories || []
         };
     });
@@ -177,8 +182,8 @@ async function start() {
         if (entry && !location.hash && !start.openedEntry) {
             start.openedEntry = true;
             const id = new URLSearchParams(location.search).get('id');
-            if (entry === 'add') openForm('transaction');
-            else if (state.transactions.some(record => record.id === id)) openForm('transaction', id);
+            if (entry === 'add') openTransaction();
+            else if (state.transactions.some(record => record.id === id)) openTransaction(id);
             else toast('That transaction was not found.');
         }
     } catch (error) {
@@ -220,14 +225,10 @@ document.querySelector('.skip').addEventListener('click', event => {
     document.querySelector('#main')?.focus();
 });
 
-function selectAccount(id) {
-    const form = dialog.querySelector('#entry');
-    if (!form?.elements.account) return;
-    form.elements.account.value = id;
-    form.querySelectorAll('.account-choice').forEach(button => {
-        const active = button.dataset.action === 'account-choice:' + id;
-        button.classList.toggle('selected', active);
-        button.setAttribute('aria-pressed', active);
+function highlightChoice(form, selector, selected) {
+    form.querySelectorAll(selector).forEach(button => {
+        button.classList.toggle('selected', button === selected);
+        button.setAttribute('aria-pressed', button === selected);
     });
 }
 
@@ -259,7 +260,7 @@ document.addEventListener('click', event => {
         case 'quick-category': {
             const template = CATEGORY_TEMPLATES.slice(6)[Number(id)];
             if (!template) break;
-            const existing = state.categories.find(category => category.templateKey === template.id);
+            const existing = state.categories.find(category => category.templateKey === template.templateKey);
             openCustomCategory(existing?.name || template.name, 'expense', existing?.id, { template });
             break;
         }
@@ -312,27 +313,52 @@ document.addEventListener('click', event => {
             form.querySelector('#subcategory-input').focus();
             break;
         }
-        case 'transaction': openForm('transaction'); break;
-        case 'budget-add': openForm('transaction', '', id); break;
+        case 'transaction': openTransaction(); break;
+        case 'budget-add': openTransaction('', id); break;
         case 'edit': {
             const record = state.transactions.find(item => item.id === id);
             if (!record) break;
             if (record.recordId) {
                 const transfer = state.transactions.find(item => item.recordId === record.recordId && item.type === 'transfer-out');
                 window.openTransfer?.(transfer.account, transfer);
-            } else openForm('transaction', id);
+            } else openTransaction(id);
             break;
         }
         case 'delete': {
             const record = state.transactions.find(item => item.id === id);
             if (!record) break;
+            const isRecurring = record.recurring || record.recurringSource;
+            const seriesId = record.recurring ? id : record.recurringSource;
+            const hasActiveSeries = Boolean(seriesId && state.transactions.some(item =>
+                item.id === seriesId && item.recurring
+            ));
+            const message = record.recordId
+                ? 'This removes the transfer from both accounts, including any fee.'
+                : record.recurringSource
+                    ? hasActiveSeries
+                        ? 'Delete this month’s transaction, or stop the monthly series? Past repeats stay saved.'
+                        : 'The monthly series has already stopped. You can delete this month’s transaction.'
+                    : record.recurring
+                        ? 'This removes the original record and stops future repeats. Past repeats stay saved.'
+                        : 'This removes the record and updates your balances and budgets.';
+            let deleteActions;
+            if (record.recordId) {
+                deleteActions = actionButton('Delete transaction', 'confirm-delete:' + record.recordId, 'danger');
+            } else if (record.recurringSource) {
+                deleteActions = actionButton('Delete this month', 'confirm-delete:' + id, 'quiet danger');
+                if (hasActiveSeries) {
+                    deleteActions += actionButton('Delete monthly recurring', 'confirm-delete-series:' + seriesId, 'danger');
+                }
+            } else if (record.recurring) {
+                deleteActions = actionButton('Delete monthly recurring', 'confirm-delete-series:' + seriesId, 'danger');
+            } else {
+                deleteActions = actionButton('Delete transaction', 'confirm-delete:' + id, 'danger');
+            }
             dialog.innerHTML = '<div class="flow-head"><button type="button" data-action="close" aria-label="Close">×</button>' +
-                '<h2>Delete transaction?</h2><span></span></div><p>' +
-                (record.recordId ? 'This removes the transfer from both accounts, including any fee.' :
-                    record.recurring ? 'This removes the original record and stops future repeats. Past repeats stay saved.' :
-                        'This removes the record and updates your balances and budgets.') +
-                '</p><div class="form-actions">' + actionButton('Keep transaction', 'close') +
-                actionButton('Delete transaction', 'confirm-delete:' + (record.recordId || id), 'danger') + '</div>';
+                '<h2>' + (isRecurring ? 'Delete monthly transaction?' : 'Delete transaction?') + '</h2><span></span></div><p>' +
+                message + '</p><div class="form-actions' +
+                (record.recurringSource && hasActiveSeries ? ' recurring-delete-actions' : '') + '">' +
+                actionButton('Keep transaction', 'close') + deleteActions + '</div>';
             presentDialog();
             break;
         }
@@ -343,21 +369,37 @@ document.addEventListener('click', event => {
                 if (ready) toast('Transaction deleted.');
             });
             break;
+        case 'confirm-delete-series':
+            saveButton(button, async () => {
+                await persist('/transaction/' + encodeURIComponent(id) + '/recurring', { method: 'DELETE' });
+                if (dialog.open) dialog.close();
+                if (ready) toast('Monthly recurring transaction deleted. Past repeats remain saved.');
+            });
+            break;
         case 'subchip':
         case 'custom-description': {
             const form = button.form;
-            const custom = action === 'custom-description';
-            form.elements.description.value = custom ? '' : id;
+            const selected = button.getAttribute('aria-pressed') === 'true' ? null : button;
+            const custom = selected && action === 'custom-description';
+            form.elements.description.value = selected && !custom ? id : '';
             form.elements.customDescription.value = '';
             form.querySelector('.custom-description').hidden = !custom;
-            form.querySelectorAll('.subchip').forEach(chip => {
-                chip.classList.toggle('selected', chip === button);
-                chip.setAttribute('aria-pressed', chip === button);
-            });
+            highlightChoice(form, '.subchip', selected);
             if (custom) form.elements.customDescription.focus();
             break;
         }
-        case 'account-choice': selectAccount(id); break;
+        case 'category-choice': {
+            const form = button.form;
+            if (form.elements.category.value === id) break;
+            form.elements.category.value = id;
+            highlightChoice(form, '.category-choice', button);
+            updateTransactionSubchips(form);
+            break;
+        }
+        case 'account-choice':
+            button.form.elements.account.value = id;
+            highlightChoice(button.form, '.account-choice', button);
+            break;
         case 'entry-expense':
         case 'entry-income': {
             const form = button.form;
@@ -369,13 +411,11 @@ document.addEventListener('click', event => {
                 toast('Add an ' + type + ' category first.', true);
                 break;
             }
-            form.elements.category.innerHTML = options(choices, choices[0]?.id);
+            form.elements.category.value = '';
+            form.querySelector('.category-choice-grid').innerHTML = transactionCategoryChoices(choices);
             form.elements.type.value = type;
-            form.querySelectorAll('.type-switch button').forEach(item => {
-                item.classList.toggle('selected', item === button);
-                item.setAttribute('aria-pressed', item === button);
-            });
-            updateTransactionSubchips(choices[0]?.id);
+            highlightChoice(form, '.type-switch button', button);
+            updateTransactionSubchips(form);
             break;
         }
         case 'amount-up':
@@ -398,19 +438,16 @@ document.addEventListener('click', event => {
             render();
             break;
         }
-        default:
-            if (action.startsWith('stat-')) { statType = action.slice(5); render(); }
-            if (action.startsWith('mode-')) { statMode = action.slice(5); render(); }
     }
 });
 
 document.addEventListener('change', event => {
     const input = event.target;
+    if (input.matches('input[type="month"]')) input.blur();
     if (input.id === 'month' && input.value) {
         month = input.value;
         render();
     }
-    if (input.id === 'entry-category') updateTransactionSubchips(input.value);
     if (input.id === 'entry-type') {
         const budget = input.form.elements.budget;
         budget.closest('label').hidden = input.value === 'income';
@@ -447,16 +484,21 @@ document.addEventListener('submit', event => {
     const submit = event.submitter || form.querySelector('button.primary');
 
     if (form.dataset.kind === 'transaction') {
-        const description = (values.customDescription.trim() || values.description).trim();
-        if (!description) {
-            toast('Choose a subcategory or enter a description.', true);
-            form.querySelector('.subchip')?.focus();
+        if (!values.category) {
+            toast('Choose a category.', true);
+            form.querySelector('.category-choice')?.focus();
             return;
         }
+        if (!values.account) {
+            toast('Choose an account.', true);
+            form.querySelector('.account-choice')?.focus();
+            return;
+        }
+        const customDescription = values.customDescription.trim();
         const body = {
             amount: Number(values.amount), date: values.date, account: values.account,
-            category: values.category, description, type: values.type,
-            saveSubcategory: Boolean(values.customDescription.trim())
+            category: values.category, description: customDescription || values.description, type: values.type,
+            saveSubcategory: Boolean(customDescription)
         };
         if (values.recurring !== undefined) body.recurring = values.recurring === 'yes';
         saveButton(submit, async () => {
