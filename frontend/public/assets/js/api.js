@@ -30,6 +30,10 @@
             });
             const data = await response.json().catch(() => null);
             if (response.status === 401) logOut(true);
+            if (!data?.message && [404, 405].includes(response.status) &&
+                method === 'DELETE' && path.startsWith('/categories/')) {
+                throw new Error('Category deletion is unavailable on this server. Update the Eve backend and try again.');
+            }
             if (!response.ok) throw new Error(data?.message || 'Unable to complete your request.');
             return data;
         } catch (error) {

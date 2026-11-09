@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 const categoriesSchema = new mongoose.Schema({
     // The User ID of the person who owns this category.
@@ -34,13 +34,13 @@ const categoriesSchema = new mongoose.Schema({
         default: []
     },
     deletedAt: Date
-})
+});
 
 categoriesSchema.index(
     { user: 1, templateKey: 1 },
     { unique: true, partialFilterExpression: { templateKey: { $type: 'string' } } }
-)
+);
 
-const Categories =  mongoose.model("Category", categoriesSchema)
+const Categories = mongoose.model('Category', categoriesSchema);
 
-export default Categories
+export default Categories;
