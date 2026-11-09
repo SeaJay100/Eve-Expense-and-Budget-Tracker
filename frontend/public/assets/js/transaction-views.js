@@ -15,6 +15,7 @@ function rowList(records, preserveOrder = false) {
     const rows = orderedRecords.map(record => {
         const category = findCategory(record.category);
         const account = state.accounts.find(item => item.id === record.account);
+        const accountName = account ? account.name + (account.archived ? ' (archived)' : '') : 'Account unavailable';
         const isTransfer = record.type === 'transfer-in' || record.type === 'transfer-out';
         const isAdjustment = record.type === 'adjustment-in' || record.type === 'adjustment-out';
         const isIncoming = record.type === 'income' || record.type === 'transfer-in' || record.type === 'adjustment-in';
@@ -32,7 +33,7 @@ function rowList(records, preserveOrder = false) {
                 </div>
             </td>
             <td>${esc(isAdjustment ? '---' : record.description?.trim() || '---')}</td>
-            <td>${esc(account?.name)}</td>
+            <td>${esc(accountName)}</td>
             <td>${dateLabel}</td>
             <td class="amount ${isIncoming ? 'positive' : 'negative'}">
                 ${isIncoming ? '+' : '−'}${money(record.amount)}
@@ -102,7 +103,8 @@ function homePage() {
     const income = total(records, 'income');
     const expenses = total(records, 'expense');
     const net = income - expenses;
-    const totalBalance = state.accounts.reduce((sum, account) => sum + balance(account), 0);
+    const visibleAccounts = state.accounts.filter(account => !account.archived);
+    const totalBalance = visibleAccounts.reduce((sum, account) => sum + balance(account), 0);
     const recent = [...state.transactions].sort(newestFirst).slice(0, 5);
     const latestAdjustment = [...state.transactions]
         .filter(record => record.type === 'adjustment-in' || record.type === 'adjustment-out')
@@ -122,7 +124,7 @@ function homePage() {
         <div class="lead">
             <span>Total balance</span>
             <strong>${money(totalBalance)}</strong>
-            <small class="muted">Across ${state.accounts.length} accounts · all time</small>
+            <small class="muted">Across ${visibleAccounts.length} accounts · all time</small>
         </div>
         <div>
             <span class="muted">Monthly income</span>

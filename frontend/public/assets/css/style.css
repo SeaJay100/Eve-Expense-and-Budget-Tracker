@@ -339,6 +339,7 @@ small {
 }
 
 .category-icon {
+    --category-icon-cutout: var(--green);
     height: 36px;
     width: 36px;
     display: grid;
@@ -352,6 +353,11 @@ small {
 .category-icon svg {
     width: 58%;
     height: 58%;
+}
+
+.category-icon.currency-category-icon svg {
+    width: 70%;
+    height: 70%;
 }
 
 .budget-top .category-icon {
@@ -1048,10 +1054,18 @@ dialog .section-head {
     transition: transform 180ms var(--ease-out),background-color 180ms;
 }
 
+.category-choice .category-icon {
+    --category-icon-cutout: #f3f5f0;
+}
+
 .category-choice.selected .category-icon,
 .account-choice.selected .account-choice-icon {
     background: var(--green);
     color: white;
+}
+
+.category-choice.selected .category-icon {
+    --category-icon-cutout: var(--green);
 }
 
 .account-choice.selected .account-choice-icon {

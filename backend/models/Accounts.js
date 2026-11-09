@@ -42,7 +42,8 @@ const accountSchema = new mongoose.Schema({
         type: String,
         trim: true,
         maxlength: 120
-    }
+    },
+    archivedAt: Date
 });
 
 const Account = mongoose.model('Account', accountSchema);

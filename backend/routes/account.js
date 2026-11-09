@@ -83,7 +83,7 @@ router.put('/account/:id', protect, async (req, res) => {
         let responseError;
         await session.withTransaction(async () => {
             responseError = null;
-            account = await Account.findOne({ _id: req.params.id, user: req.user._id }).session(session);
+            account = await Account.findOne({ _id: req.params.id, user: req.user._id, archivedAt: null }).session(session);
             if (!account) {
                 responseError = { status: 404, message: 'Account not found.' };
                 return;
@@ -175,6 +175,33 @@ router.put('/account/:id', protect, async (req, res) => {
         if (err.name === 'ValidationError' || err.name === 'CastError') {
             return badRequest(res, err.message);
         }
+        return res.status(500).json({ message: err.message });
+    } finally {
+        if (session) await session.endSession();
+    }
+});
+
+router.delete('/account/:id', protect, async (req, res) => {
+    let session;
+    try {
+        session = await Account.startSession();
+        let responseError;
+        await session.withTransaction(async () => {
+            responseError = null;
+            const account = await Account.findOne({ _id: req.params.id, user: req.user._id, archivedAt: null }).session(session);
+            if (!account) {
+                responseError = { status: 404, message: 'Account not found.' };
+                return;
+            }
+
+            account.archivedAt = new Date();
+            await account.save({ session });
+        });
+
+        if (responseError) return res.status(responseError.status).json({ message: responseError.message });
+        return res.status(200).json({ message: 'Account archived. Its transaction history was kept.' });
+    } catch (err) {
+        if (err.name === 'CastError') return badRequest(res, 'Invalid account.');
         return res.status(500).json({ message: err.message });
     } finally {
         if (session) await session.endSession();

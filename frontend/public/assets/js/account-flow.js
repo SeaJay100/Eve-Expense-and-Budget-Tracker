@@ -3,6 +3,7 @@
     if (!dialog) return;
 
     const accounts = () => state.accounts || [];
+    const activeAccounts = () => accounts().filter(account => !account.archived);
     const transactions = () => state.transactions || [];
     const accountById = id => accounts().find(account => String(account.id) === String(id));
     function accountGlyph(account) {
@@ -213,8 +214,20 @@
             '<label>Current balance (PHP)<input name="currentBalance" type="number" step="0.01" required value="' +
                 currentBalance(account) + '"></label>' +
             '<p class="muted">A balance change is recorded as a Balance adjustment transaction.</p>' +
-            '<div class="form-actions"><button type="button" data-action="account-open:' + esc(account.id) +
+            '<div class="form-actions account-edit-actions"><button type="button" class="danger account-delete-button" data-action="account-delete:' +
+                esc(account.id) + '">Delete account</button><button type="button" data-action="account-open:' + esc(account.id) +
                 '">Cancel</button><button class="primary">Save changes</button></div></form>');
+    }
+
+    function accountDelete(id) {
+        const account = accountById(id);
+        if (!account) return;
+
+        show(flowHeader('Delete account', 'account-edit:' + account.id) +
+            '<p class="account-delete-warning">Deleting ' + esc(account.name) +
+            ' removes it from active accounts and net worth. Its transaction history will stay in Eve.</p>' +
+            '<div class="form-actions">' + actionButton('Keep account', 'account-edit:' + esc(account.id)) +
+            actionButton('Delete account', 'account-delete-confirm:' + esc(account.id), 'danger') + '</div>');
     }
 
     function transferForm(accountId, record = null) {
@@ -225,20 +238,21 @@
         dialog.dataset.accountId = from.id;
         dialog.dataset.transferTarget = toId;
         const fromAction = 'account-open:' + from.id;
-        const available = accounts().filter(account => String(account.id) !== String(from.id));
+        const available = activeAccounts().filter(account => String(account.id) !== String(from.id));
+        const destination = accountById(toId);
+        if (record && destination?.archived) available.unshift(destination);
         if (!available.length) {
             show(flowHeader('Transfer', fromAction) + '<p>Add another account to transfer money.</p><div class="form-actions">' +
                 actionButton('Add account', 'account', 'primary') + '</div>');
             return;
         }
         const date = String(record?.date || today()).slice(0, 10);
-        const destination = accountById(toId);
         const recordAttribute = record?.recordId ? `data-record-id="${esc(record.recordId)}"` : '';
         const title = record ? 'Edit transfer' : 'Transfer';
         const choices = available.map(account => `<button type="button" class="account-option"
             data-action="transfer-target:${esc(account.id)}">
             <span class="account-option-icon">${esc(accountGlyph(account))}</span>
-            <span>${esc(account.name)}</span>
+            <span>${esc(account.name)}${account.archived ? ' (archived)' : ''}</span>
             <span class="muted">${viewAmount(currentBalance(account))}</span>
         </button>`).join('');
 
@@ -314,7 +328,7 @@
         let assetCount = 0;
         let liabilityCount = 0;
         const cards = [];
-        for (const account of accounts()) {
+        for (const account of activeAccounts()) {
             const balance = currentBalance(account);
             if (balance > 0 || (balance === 0 && !isLiability(account))) {
                 assetTotal += balance;
@@ -424,6 +438,20 @@
         } else if (action.startsWith('account-brand-back:')) { handle(); brandPicker(action.slice('account-brand-back:'.length)); }
         else if (action.startsWith('account-open:')) { handle(); accountDetail(action.slice('account-open:'.length)); }
         else if (action.startsWith('account-edit:')) { handle(); accountEdit(action.slice('account-edit:'.length)); }
+        else if (action.startsWith('account-delete:')) { handle(); accountDelete(action.slice('account-delete:'.length)); }
+        else if (action.startsWith('account-delete-confirm:')) {
+            handle();
+            const id = action.slice('account-delete-confirm:'.length);
+            button.disabled = true;
+            persist('/account/' + encodeURIComponent(id), { method: 'DELETE' })
+                .then(() => {
+                    if (!ready) return;
+                    dialog.close();
+                    toast('Account deleted.');
+                })
+                .catch(error => toast(error.message, true))
+                .finally(() => { if (button.isConnected) button.disabled = false; });
+        }
         else if (action.startsWith('account-addtx:')) {
             handle();
             dialog.close();

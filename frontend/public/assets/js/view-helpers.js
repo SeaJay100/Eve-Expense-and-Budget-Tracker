@@ -25,8 +25,6 @@ const categoryIconPaths = {
         'M9 5v2h6V5H9Zm2 5v3H8v2h3v3h2v-3h3v-2h-3v-3h-2Z',
     personalCare: 'M6 8c1-3 3.5-5 7-5a7 7 0 0 1 7 7v4c0 2 1 3.6 2 4.5C20 21 15.5 22 12 22s-7.5-1-9-3.5c1.3-1 2-2.5 2-4.5v-3l1-3Z ' +
         'M8 13v1a5 5 0 0 0 10 0v-3c-2.7 1.6-5.5 2.4-10 2Zm2.5 2h5a2.5 2.5 0 0 1-5 0ZM4 1l1 2 2 1-2 1-1 2-1-2-2-1 2-1Z',
-    salary: 'M4 4h16a2 2 0 0 1 2 2v2H2V6a2 2 0 0 1 2-2Zm-2 6h20v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8Z ' +
-        'M17 11.5v1c-1.3.1-2 .8-2 1.7 0 1 .8 1.5 1.8 1.8.7.2 1 .4 1 .7s-.3.5-.8.5c-.6 0-1.1-.2-1.7-.6l-.6 1c.6.4 1.4.7 2.3.7v1h1v-1.1c1.1-.2 1.8-.8 1.8-1.7 0-1-.7-1.5-1.9-1.8-.6-.2-.9-.3-.9-.6 0-.3.3-.5.8-.5.4 0 .9.2 1.3.5l.6-1c-.4-.3-1-.5-1.7-.6v-1h-1Z',
     freelance: 'M7 3h10l5 6-10 12L2 9l5-6Zm.2 6L6 10.5l6 5 6-5L16.8 9 12 13 7.2 9Z',
     investment: 'M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12Zm1 2H9v1.5h1v6.5h1.5v-2H13a3 3 0 1 0 0-6Zm0 1.5a1.5 1.5 0 0 1 0 3h-1.5v-3H13Z',
     housing: 'M2 11 12 2l10 9h-3v10h-5v-6h-4v6H5V11H2Z',
@@ -55,13 +53,16 @@ const categoryIconsByName = new Map([
     ['food & drink', 'food'], ['transport', 'transport'], ['transportation', 'transport'],
     ['home bills', 'bills'], ['bills & utilities', 'bills'], ['self-care', 'personalCare'],
     ['personal care', 'personalCare'], ['shopping', 'shopping'], ['health', 'health'],
-    ['salary', 'salary'], ['salaries', 'salary'], ['freelance', 'freelance'],
+    ['salary', 'salary'], ['salaries', 'salary'], ['allowance', 'allowance'], ['freelance', 'freelance'],
     ['investment', 'investment'], ['housing & rent', 'housing'], ['hotels', 'hotels'],
     ['tax', 'tax'], ['furniture', 'furniture'], ['appliances', 'appliances'],
     ['travel', 'travel'], ['air travel', 'travel'], ['tickets', 'tickets'], ['shipping', 'shipping'],
     ['marketing', 'marketing'], ['office supplies', 'printer'], ['office expense', 'office'],
     ['base', 'tools'], ['labor', 'labor'], ['kitchen', 'kitchen'], ['bathroom', 'bathroom']
 ]);
+
+const pesoMarkPath = 'M3 1h4a4 4 0 0 1 0 8H5v5H3V1Zm2 2v4h2a2 2 0 0 0 0-4H5ZM2 5h8v1.2H2V5Zm0 2.6h8v1.2H2V7.6Z';
+const allowanceHandPath = 'M2 14.5h5.2c.8 0 1.5.3 2.1.8l1 .8h3.2l2.5-1.8a1.4 1.4 0 0 1 1.7 2.2l-3.1 2.2c-.5.4-1.1.6-1.7.6H8l-3 1.5H2v-6.3Z';
 
 function categoryBadge(category, fallback = 'categories') {
     const name = category?.name?.trim().toLowerCase();
@@ -72,10 +73,18 @@ function categoryBadge(category, fallback = 'categories') {
         key = glyph;
     }
 
-    return `<span class="category-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" focusable="false">
-            <path fill="currentColor" fill-rule="evenodd" d="${categoryIconPaths[key]}"/>
-        </svg>
+    const iconContent = key === 'salary'
+        ? `<path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm-2 4v2h20V9H2Z" fill="currentColor" fill-rule="evenodd"/>
+            <path d="${pesoMarkPath}" transform="translate(12.4 9.5) scale(.58)" fill="var(--category-icon-cutout)"/>`
+        : key === 'allowance'
+            ? `<circle cx="12" cy="7.5" r="5" fill="currentColor"/>
+                <path d="${pesoMarkPath}" transform="translate(9.5 2.8) scale(.48)" fill="var(--category-icon-cutout)"/>
+                <path d="${allowanceHandPath}" fill="currentColor"/>
+                `
+            : `<path fill="currentColor" fill-rule="evenodd" d="${categoryIconPaths[key]}"/>`;
+
+    return `<span class="category-icon${key === 'salary' || key === 'allowance' ? ' currency-category-icon' : ''}" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">${iconContent}</svg>
     </span>`;
 }
 
@@ -108,7 +117,7 @@ function monthControl() {
 
 function options(items, selectedId) {
     return items.map(item => `<option value="${esc(item.id)}"
-        ${item.id === selectedId ? 'selected' : ''}>${esc(item.name)}${item.deleted ? ' (deleted)' : ''}</option>`).join('');
+        ${item.id === selectedId ? 'selected' : ''}>${esc(item.name)}${item.deleted ? ' (deleted)' : ''}${item.archived ? ' (archived)' : ''}</option>`).join('');
 }
 
 function viewAmount(value) {
